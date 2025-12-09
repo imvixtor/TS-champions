@@ -4,18 +4,24 @@ import com.example.football_manager.modules.team.dto.TeamRequest;
 import com.example.football_manager.modules.team.dto.TeamResponse;
 import com.example.football_manager.modules.team.entity.Team;
 import com.example.football_manager.modules.team.service.TeamService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/team")
+@RequestMapping("/champions/team")
+@RequiredArgsConstructor
 public class TeamController {
-    @Autowired private TeamService teamService;
+    private TeamService teamService;
 
     @PostMapping(value = "/create", consumes = "multipart/form-data")
-    public ResponseEntity<?> createTeam(@RequestPart("team") TeamRequest team, @RequestPart(value = "logo", required = false) MultipartFile logo){
+    public ResponseEntity<?> createTeam(@RequestPart("team") @Valid TeamRequest team,
+                                        @Valid @RequestPart(value = "logo", required = false) MultipartFile logo){
         TeamResponse response = teamService.createTeam(team, logo);
         return ResponseEntity.ok(response);
     }
@@ -34,4 +40,23 @@ public class TeamController {
         TeamResponse response = teamService.updateTeam(id, request, logo);
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/delete/{id}")
+    public  ResponseEntity<?> deleteTeam(@PathVariable Long id){
+        teamService.delete(id);
+        return ResponseEntity.ok("xóa thành công " + id);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TeamResponse>> getAllTeams() {
+        return ResponseEntity.ok(teamService.findAll());
+        // Bạn cần viết hàm findAll() trong Service trả về List<TeamResponse>
+    }
+
+    // 2. Tìm kiếm đội bóng
+    @GetMapping("/search")
+    public ResponseEntity<List<TeamResponse>> searchTeams(@RequestParam String name) {
+        return ResponseEntity.ok(teamService.searchByName(name));
+    }
+
 }

@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Player extends BaseEntity {
+    @Column(nullable = false)
     private String name;
     private Integer shirtNumber;
 
@@ -18,7 +19,7 @@ public class Player extends BaseEntity {
 
     private String avatarUrl;
 
-    @ManyToOne
-    @JoinColumn(name = "team_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 }
