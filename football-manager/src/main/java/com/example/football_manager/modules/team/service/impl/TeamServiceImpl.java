@@ -17,6 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -59,6 +61,28 @@ public class TeamServiceImpl implements TeamService {
         }
     }
 
+    private TeamResponse mapToResponse(Team team) {
+        TeamResponse res = new TeamResponse();
+        res.setId(team.getId());
+        res.setName(team.getName());
+        res.setShortName(team.getShortName());
+        res.setCoachName(team.getCoachName());
+        res.setHomeStadium(team.getHomeStadium());
+        res.setLogoUrl(team.getLogoUrl());
+        return res;
+    }
+
+    private void deleteLogoFile(String logoUrl){
+        try {
+            String fileName = logoUrl.replace("/uploads/", "");
+            Path filePath = Paths.get(uploadDir).resolve(fileName);
+
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            log.error("Không thể xóa file logo" + logoUrl, e);
+        }
+    }
+
 
 
     @Override
@@ -74,10 +98,9 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public TeamResponse updateTeam(Long id, TeamRequest dto, MultipartFile logoFile) {
+    public TeamResponse updateTeam(Integer id, TeamRequest dto, MultipartFile logoFile) {
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
-
         // Dùng chung
         applyTeamFields(team, dto, logoFile);
 
@@ -87,12 +110,36 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public TeamResponse getTeam(Long id){
+    public TeamResponse getTeam(Integer id){
      Team team = teamRepository.findById(id).orElseThrow(() ->
              new RuntimeException("Đội không tồn tại"));
 
      return TeamMapper.toResponse(team);
     }
 
+    @Override
+    public void delete(Integer id){
+            Team team = teamRepository.findById(id).orElseThrow(() -> new RuntimeException("Team not found"));
 
-}
+            if (team.getLogoUrl() != null){
+                deleteLogoFile(team.getLogoUrl());
+            }
+
+            teamRepository.delete(team);
+    }
+
+    public List<TeamResponse> findAll(){
+        return teamRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TeamResponse> searchByName(String name) {
+        return teamRepository.findByNameContainingIgnoreCase(name).stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+    }
+
+

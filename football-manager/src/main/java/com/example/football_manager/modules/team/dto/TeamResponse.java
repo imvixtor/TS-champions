@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TeamResponse {
-    private Long id;
+    private Integer id;
     private String name;
     private String shortName;
     private String coachName;
