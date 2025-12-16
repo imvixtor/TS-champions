@@ -23,3 +23,5 @@ public class Player extends BaseEntity {
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 }
+
+

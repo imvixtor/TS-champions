@@ -8,13 +8,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface PlayerService {
-    List<PlayerResponse> getPlayersByTeam(Long teamId);
+    List<PlayerResponse> getPlayersByTeam(Integer teamId);
 
     PlayerResponse createPlayer(PlayerRequest request, MultipartFile avatarFile);
 
-    void delete(Long id);
+    void delete(Integer id);
 
-    PlayerResponse updatePlayer(Long id, PlayerRequest request, MultipartFile avatarFile);
+    PlayerResponse updatePlayer(Integer id, PlayerRequest request, MultipartFile avatarFile);
 
-    PlayerResponse findById(Long id);
+    PlayerResponse findById(Integer id);
 }

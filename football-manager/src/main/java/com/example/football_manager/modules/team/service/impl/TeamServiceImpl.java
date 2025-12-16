@@ -98,7 +98,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public TeamResponse updateTeam(Long id, TeamRequest dto, MultipartFile logoFile) {
+    public TeamResponse updateTeam(Integer id, TeamRequest dto, MultipartFile logoFile) {
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
         // Dùng chung
@@ -110,7 +110,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public TeamResponse getTeam(Long id){
+    public TeamResponse getTeam(Integer id){
      Team team = teamRepository.findById(id).orElseThrow(() ->
              new RuntimeException("Đội không tồn tại"));
 
@@ -118,7 +118,7 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public void delete(Long id){
+    public void delete(Integer id){
             Team team = teamRepository.findById(id).orElseThrow(() -> new RuntimeException("Team not found"));
 
             if (team.getLogoUrl() != null){

@@ -33,6 +33,13 @@ public class TournamentTeam extends BaseEntity {
     private Integer goalsFor = 0;
     private Integer goalsAgainst = 0;
 
+    private Integer yellowCards = 0; // Tổng thẻ vàng
+    private Integer redCards = 0;    // Tổng thẻ đỏ
+
+    public int getFairPlayScore() {
+        return (yellowCards * 1) + (redCards * 3);
+    }
+
     // Hàm tiện ích tính hiệu số
     public Integer getGoalDifference() {
         return goalsFor - goalsAgainst;

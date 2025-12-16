@@ -50,7 +50,7 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public List<PlayerResponse> getPlayersByTeam(Long teamId){
+    public List<PlayerResponse> getPlayersByTeam(Integer teamId){
         if(!teamRepository.existsById(teamId)){
             throw new RuntimeException("Team ID not found");
         }
@@ -61,11 +61,11 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public void delete(Long id){
+    public void delete(Integer id){
         playerRepository.deleteById(id);
     }
 
-    public PlayerResponse updatePlayer(Long id, PlayerRequest request, MultipartFile avatarFile){
+    public PlayerResponse updatePlayer(Integer id, PlayerRequest request, MultipartFile avatarFile){
         Player player = playerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("not found player"));
 
@@ -86,7 +86,7 @@ public class PlayerServiceImpl implements PlayerService {
         return mapToResponse(savedPlayer);
     }
 
-    public PlayerResponse findById(Long id){
+    public PlayerResponse findById(Integer id){
         Player player = playerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Not found player"));
         return mapToResponse(player);

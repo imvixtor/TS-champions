@@ -26,12 +26,12 @@ public class PlayerController {
     }
 
     @GetMapping("/by-team/{teamId}")
-    public ResponseEntity<List<PlayerResponse>> getPlayerByTeam(@PathVariable Long teamId){
+    public ResponseEntity<List<PlayerResponse>> getPlayerByTeam(@PathVariable Integer teamId){
         return ResponseEntity.ok(playerService.getPlayersByTeam(teamId));
     }
 
     @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<PlayerResponse> updatePlayer(@PathVariable Long id,
+    public ResponseEntity<PlayerResponse> updatePlayer(@PathVariable Integer id,
                                                        @RequestPart("player") PlayerRequest player,
                                                        @RequestPart(value = "avatar", required = false) MultipartFile avatarFile){
         PlayerResponse response = playerService.updatePlayer(id, player, avatarFile);
@@ -40,13 +40,13 @@ public class PlayerController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deletePlayer(@PathVariable Long id) {
+    public ResponseEntity<Void> deletePlayer(@PathVariable Integer id) {
         playerService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PlayerResponse> getPlayerDetail(@PathVariable Long id){
+    public ResponseEntity<PlayerResponse> getPlayerDetail(@PathVariable Integer id){
         return ResponseEntity.ok(playerService.findById(id));
     }
 

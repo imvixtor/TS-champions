@@ -9,5 +9,5 @@ public class PlayerRequest {
     private Integer shirtNumber;
     private Position position;
     private String avatarUrl;
-    private Long teamId;
+    private Integer teamId;
 }

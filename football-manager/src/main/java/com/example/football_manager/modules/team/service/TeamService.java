@@ -11,9 +11,9 @@ import java.util.List;
 public interface TeamService {
 
     public TeamResponse createTeam(TeamRequest dto, MultipartFile logoFile);
-    public TeamResponse getTeam(Long id);
-    public TeamResponse updateTeam(Long id, TeamRequest dto, MultipartFile logoFile);
-    public void delete(Long id);
+    public TeamResponse getTeam(Integer id);
+    public TeamResponse updateTeam(Integer id, TeamRequest dto, MultipartFile logoFile);
+    public void delete(Integer id);
 
     public List<TeamResponse> findAll();
 

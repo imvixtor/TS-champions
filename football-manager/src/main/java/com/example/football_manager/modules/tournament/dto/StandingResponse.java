@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class StandingResponse {
-    private Long teamId;
+    private Integer teamId;
     private String teamName;
     private String teamLogo;
     private String groupName;
@@ -14,4 +14,8 @@ public class StandingResponse {
     private Integer drawn;
     private Integer lost;
     private Integer gd; // Hiệu số (Goal Difference)
+
+    private Integer yellowCards;
+    private Integer redCards;
+    private Integer fairPlayScore;
 }

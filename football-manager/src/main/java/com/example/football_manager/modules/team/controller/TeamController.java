@@ -27,13 +27,13 @@ public class TeamController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TeamResponse> getById(@PathVariable Long id){
+    public ResponseEntity<TeamResponse> getById(@PathVariable Integer id){
         return ResponseEntity.ok(teamService.getTeam(id));
     }
 
     @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
     public ResponseEntity<?> updateTeam(
-            @PathVariable Long id,
+            @PathVariable Integer id,
             @RequestPart("team") TeamRequest request,
             @RequestPart(value = "logo", required = false) MultipartFile logo
     ){
@@ -42,7 +42,7 @@ public class TeamController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public  ResponseEntity<?> deleteTeam(@PathVariable Long id){
+    public  ResponseEntity<?> deleteTeam(@PathVariable Integer id){
         teamService.delete(id);
         return ResponseEntity.ok("xóa thành công " + id);
     }

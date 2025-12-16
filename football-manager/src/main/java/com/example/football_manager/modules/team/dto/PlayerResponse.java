@@ -5,12 +5,12 @@ import lombok.Data;
 
 @Data
 public class PlayerResponse {
-    private Long id;
+    private Integer id;
     private String name;
     private Integer shirtNumber;
     private Position position;
     private String avatarUrl;
 
-    private Long teamId;
+    private Integer teamId;
     private String teamName;
 }
