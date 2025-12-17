@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface MatchEventRepository extends JpaRepository<MatchEvent, Integer> {
-    long countByMatchIdAndTeamIdAndType(Long matchId, Long teamId, EventType type);
+    long countByMatchIdAndTeamIdAndType(Integer matchId, Integer teamId, EventType type);
 
     @Query("SELECT new com.example.football_manager.modules.match.dto.TopScorerDTO(" +
             "p.name, t.name, p.avatarUrl, COUNT(e)) " +
@@ -20,5 +20,5 @@ public interface MatchEventRepository extends JpaRepository<MatchEvent, Integer>
             "WHERE e.type = 'GOAL' AND e.match.tournament.id = :tourId " +
             "GROUP BY p.id, p.name, t.name, p.avatarUrl " +
             "ORDER BY COUNT(e) DESC")
-    List<TopScorerDTO> findTopScorers(@Param("tourId") Long tourId);
+    List<TopScorerDTO> findTopScorers(@Param("tourId") Integer tourId);
 }

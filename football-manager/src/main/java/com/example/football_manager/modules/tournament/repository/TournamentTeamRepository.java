@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TournamentTeamRepository extends JpaRepository<TournamentTeam, Integer> {
     List<TournamentTeam> findByTournamentId(Integer tournamentId);
@@ -13,4 +14,5 @@ public interface TournamentTeamRepository extends JpaRepository<TournamentTeam, 
     // Kiểm tra đội đã tồn tại trong giải chưa
     boolean existsByTournamentIdAndTeamId(Integer tournamentId, Integer teamId);
 
+    Optional<TournamentTeam> findByTournamentIdAndTeamId(Integer tournamentId, Integer teamId);
 }

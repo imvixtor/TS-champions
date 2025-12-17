@@ -6,13 +6,16 @@ import com.example.football_manager.modules.match.dto.MatchEventDTO;
 import com.example.football_manager.modules.match.dto.TopScorerDTO;
 import com.example.football_manager.modules.match.entity.Match;
 import com.example.football_manager.modules.team.entity.Team;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 public interface MatchService {
     Match CreateMatch(CreateMatchRequest request);
     void addEvent(MatchEventDTO dto);
-//    void finishMatch(Long matchId);
-//    void updateTournamentTeamStats(Match match, Team team, boolean isHome);
-//    List<TopScorerDTO> getTopScorers(Long tournamentId);
+
+    void finishMatch(Integer matchId);
+
+
+    List<TopScorerDTO> getTopScorers(Integer tournamentId);
 }
