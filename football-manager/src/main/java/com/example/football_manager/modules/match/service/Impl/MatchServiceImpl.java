@@ -95,19 +95,19 @@ public class MatchServiceImpl implements MatchService {
         match.setStatus(MatchStatus.FINISHED);
         matchRepo.save(match);
 
-        // --- CẬP NHẬT BẢNG XẾP HẠNG (BXH) ---
+        /// --- CẬP NHẬT BẢNG XẾP HẠNG (BXH) ---
         updateTournamentTeamStats(match, match.getHomeTeam(), true);
         updateTournamentTeamStats(match, match.getAwayTeam(), false);
     }
 
 
-    // Hàm cập nhật chỉ số cho từng đội trong BXH
+    /// Hàm cập nhật chỉ số cho từng đội trong BXH
     private void updateTournamentTeamStats(Match match, Team team, boolean isHome) {
         TournamentTeam tt = tourTeamRepo.findByTournamentIdAndTeamId(
                         match.getTournament().getId(), team.getId())
                 .orElseThrow(() -> new RuntimeException("Đội bóng không thuộc giải đấu này"));
 
-        // 1. Cập nhật chỉ số cơ bản
+        /// 1. Cập nhật chỉ số cơ bản
         tt.setPlayed(tt.getPlayed() + 1);
 
         int goalsScored = isHome ? match.getHomeScore() : match.getAwayScore();
@@ -116,7 +116,7 @@ public class MatchServiceImpl implements MatchService {
         tt.setGoalsFor(tt.getGoalsFor() + goalsScored);
         tt.setGoalsAgainst(tt.getGoalsAgainst() + goalsConceded);
 
-        // 2. Tính điểm (Thắng 3, Hòa 1, Thua 0)
+        /// 2. Tính điểm (Thắng 3, Hòa 1, Thua 0)
         if (goalsScored > goalsConceded) {
             tt.setWon(tt.getWon() + 1);
             tt.setPoints(tt.getPoints() + 3);
@@ -163,19 +163,18 @@ public class MatchServiceImpl implements MatchService {
     @Override
     @Transactional
     public void registerLineup(Integer matchId, LineupRequest req) {
-        // 1. Xóa đội hình cũ của đội này trong trận này (nếu có đăng ký lại)
-        // Lưu ý: Cần viết hàm deleteByMatchIdAndTeamId trong Repo
+        /// Xóa đội hình cũ của đội này trong trận này (nếu có đăng ký lại)
         matchLineupRepository.deleteByMatchIdAndTeamId(matchId, req.getTeamId());
 
         Match match = matchRepo.findById(matchId).orElseThrow();
         Team team = teamRepo.findById(req.getTeamId()).orElseThrow();
 
-        // 2. Lưu Đá chính (IsStarter = true)
+        /// Lưu Đá chính (IsStarter = true)
         for (Integer playerId : req.getStarterIds()) {
             saveLineupItem(match, team, playerId, true);
         }
 
-        // 3. Lưu Dự bị (IsStarter = false)
+        /// Lưu Dự bị (IsStarter = false)
         for (Integer playerId : req.getSubIds()) {
             saveLineupItem(match, team, playerId, false);
         }
@@ -183,29 +182,28 @@ public class MatchServiceImpl implements MatchService {
 
     @Override
     public MatchDetailResponse getMatchDetail(Integer id) {
-        // 1. Tìm trận đấu theo ID
+        /// Tìm trận đấu theo ID
         Match match = matchRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy trận đấu với ID: " + id));
 
-        // 2. Chuyển đổi Entity sang DTO (MatchDetailResponse)
-        // Lưu ý: Các getter phải khớp với tên trường trong Entity của bạn
+        /// Chuyển đổi Entity sang DTO (MatchDetailResponse)
         return MatchDetailResponse.builder()
                 .id(match.getId())
                 .matchDate(match.getMatchDate())
                 .stadium(match.getStadium())
                 .roundName(match.getRoundName())
-                .status(match.getStatus().name()) // Chuyển Enum thành String (SCHEDULED, LIVE, FINISHED)
+                .status(match.getStatus().name())
 
-                // Tỉ số
+                /// Tỉ số
                 .homeScore(match.getHomeScore())
                 .awayScore(match.getAwayScore())
 
-                // --- THÔNG TIN ĐỘI NHÀ ---
+                /// --- THÔNG TIN ĐỘI NHÀ ---
                 .homeTeamId(match.getHomeTeam().getId())
-                .homeTeam(match.getHomeTeam().getName()) // Frontend gọi là match.homeTeam để lấy tên
+                .homeTeam(match.getHomeTeam().getName())
                 .homeLogo(match.getHomeTeam().getLogoUrl())
 
-                // --- THÔNG TIN ĐỘI KHÁCH ---
+                /// --- THÔNG TIN ĐỘI KHÁCH ---
                 .awayTeamId(match.getAwayTeam().getId())
                 .awayTeam(match.getAwayTeam().getName())
                 .awayLogo(match.getAwayTeam().getLogoUrl())
@@ -223,29 +221,28 @@ public class MatchServiceImpl implements MatchService {
     }
 
 
-
 /// các hàm hỗ trợ
 
     private MatchDetailResponse mapToMatchDetailResponse(Match match) {
         MatchDetailResponse dto = new MatchDetailResponse();
         dto.setId(match.getId());
 
-        // Map thông tin Đội nhà
+        /// Map thông tin Đội nhà
         dto.setHomeTeam(match.getHomeTeam().getName());
         dto.setHomeLogo(match.getHomeTeam().getLogoUrl());
 
-        // Map thông tin Đội khách
+        /// Map thông tin Đội khách
         dto.setAwayTeam(match.getAwayTeam().getName());
         dto.setAwayLogo(match.getAwayTeam().getLogoUrl());
 
-        // Map thông tin Trận đấu
+        /// Map thông tin Trận đấu
         dto.setMatchDate(match.getMatchDate());
         dto.setRoundName(match.getRoundName());
         dto.setStadium(match.getStadium());
         dto.setHomeScore(match.getHomeScore());
         dto.setAwayScore(match.getAwayScore());
 
-        // Chuyển Enum thành String (SCHEDULED, LIVE, FINISHED)
+        /// Chuyển Enum thành String (SCHEDULED, LIVE, FINISHED)
         dto.setStatus(match.getStatus().name());
 
         return dto;
