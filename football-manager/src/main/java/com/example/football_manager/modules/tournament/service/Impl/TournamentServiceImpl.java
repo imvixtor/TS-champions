@@ -14,6 +14,7 @@ import com.example.football_manager.modules.tournament.service.TournamentService
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -115,6 +116,11 @@ public class TournamentServiceImpl implements TournamentService {
         });
 
         return list.stream().map(this::mapToStandingResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Tournament> findAll(){
+        return tournamentRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     private StandingResponse mapToStandingResponse(TournamentTeam tt) {

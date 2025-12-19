@@ -17,4 +17,6 @@ public interface TournamentService {
 //
 //
     List<StandingResponse> getStandings(Integer tournamentId);
+
+    List<Tournament> findAll();
 }

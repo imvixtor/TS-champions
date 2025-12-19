@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class TeamServiceImpl implements TeamService {
-    @Value("${upload.dir}")
+    @Value("${application.file.upload-dir}")
     private String uploadDir;
 
     @Autowired private TeamRepository teamRepository;

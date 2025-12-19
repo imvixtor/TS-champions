@@ -7,6 +7,7 @@ import com.example.football_manager.modules.team.service.PlayerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,8 +17,9 @@ import java.util.List;
 @RequestMapping("/champions/player")
 @RequiredArgsConstructor
 public class PlayerController {
-    private PlayerService playerService;
+    private final PlayerService playerService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
     @PostMapping(value = "/create", consumes = "multipart/form-data")
     public ResponseEntity<PlayerResponse> createPlayer(@RequestPart("player") PlayerRequest player,
                                                        @RequestPart(value = "avatar", required = false)MultipartFile avatarFile){
@@ -25,11 +27,13 @@ public class PlayerController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
     @GetMapping("/by-team/{teamId}")
     public ResponseEntity<List<PlayerResponse>> getPlayerByTeam(@PathVariable Integer teamId){
         return ResponseEntity.ok(playerService.getPlayersByTeam(teamId));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
     @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
     public ResponseEntity<PlayerResponse> updatePlayer(@PathVariable Integer id,
                                                        @RequestPart("player") PlayerRequest player,
@@ -39,12 +43,14 @@ public class PlayerController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deletePlayer(@PathVariable Integer id) {
         playerService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
     @GetMapping("/{id}")
     public ResponseEntity<PlayerResponse> getPlayerDetail(@PathVariable Integer id){
         return ResponseEntity.ok(playerService.findById(id));

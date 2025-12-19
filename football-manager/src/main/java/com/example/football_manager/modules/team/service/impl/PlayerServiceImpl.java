@@ -26,7 +26,7 @@ public class PlayerServiceImpl implements PlayerService {
     @Autowired private PlayerRepository playerRepository;
     @Autowired private TeamRepository teamRepository;
 
-    @Value("${upload.dir}")
+    @Value("${application.file.upload-dir}")
     private String uploadDir;
 
     @Override

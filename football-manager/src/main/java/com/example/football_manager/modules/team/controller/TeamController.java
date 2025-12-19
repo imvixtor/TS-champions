@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,8 +18,9 @@ import java.util.List;
 @RequestMapping("/champions/team")
 @RequiredArgsConstructor
 public class TeamController {
-    private TeamService teamService;
+    private final TeamService teamService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
     @PostMapping(value = "/create", consumes = "multipart/form-data")
     public ResponseEntity<?> createTeam(@RequestPart("team") @Valid TeamRequest team,
                                         @Valid @RequestPart(value = "logo", required = false) MultipartFile logo){
@@ -26,11 +28,13 @@ public class TeamController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
     @GetMapping("/{id}")
     public ResponseEntity<TeamResponse> getById(@PathVariable Integer id){
         return ResponseEntity.ok(teamService.getTeam(id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
     @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
     public ResponseEntity<?> updateTeam(
             @PathVariable Integer id,
@@ -41,6 +45,7 @@ public class TeamController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public  ResponseEntity<?> deleteTeam(@PathVariable Integer id){
         teamService.delete(id);
@@ -50,13 +55,13 @@ public class TeamController {
     @GetMapping
     public ResponseEntity<List<TeamResponse>> getAllTeams() {
         return ResponseEntity.ok(teamService.findAll());
-        // Bạn cần viết hàm findAll() trong Service trả về List<TeamResponse>
     }
 
-    // 2. Tìm kiếm đội bóng
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<List<TeamResponse>> searchTeams(@RequestParam String name) {
         return ResponseEntity.ok(teamService.searchByName(name));
     }
+
 
 }

@@ -1,9 +1,7 @@
 package com.example.football_manager.modules.match.service;
 
 
-import com.example.football_manager.modules.match.dto.CreateMatchRequest;
-import com.example.football_manager.modules.match.dto.MatchEventDTO;
-import com.example.football_manager.modules.match.dto.TopScorerDTO;
+import com.example.football_manager.modules.match.dto.*;
 import com.example.football_manager.modules.match.entity.Match;
 import com.example.football_manager.modules.team.entity.Team;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +14,12 @@ public interface MatchService {
 
     void finishMatch(Integer matchId);
 
-
     List<TopScorerDTO> getTopScorers(Integer tournamentId);
+
+    List<MatchDetailResponse> getMatchesByTournament(Integer tournamentId);
+    List<MatchDetailResponse> getPublicMatchesThisWeek();
+
+    void registerLineup(Integer matchId, LineupRequest req);
+
+    MatchDetailResponse getMatchDetail(Integer id);
 }
