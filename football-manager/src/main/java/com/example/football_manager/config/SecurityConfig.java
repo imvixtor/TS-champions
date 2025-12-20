@@ -39,6 +39,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/champions/admin/**").hasAnyAuthority("ADMIN")
                         .requestMatchers("/champions/match/**").hasAnyAuthority("ADMIN", "COACH")
+                        .requestMatchers("/champions/match-event/**").hasAnyAuthority("ADMIN", "COACH")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

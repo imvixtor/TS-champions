@@ -4,20 +4,36 @@ import axiosClient from '../../core/api/axiosClient';
 
 const API_URL = 'http://localhost:8080';
 
+// Helper: Lấy ảnh
+const getImageUrl = (path: string | null) => {
+    if (!path) return 'https://placehold.co/40';
+    if (path.startsWith('http')) return path;
+    let cleanPath = path.replace(/\\/g, '/');
+    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+    return `${API_URL}${cleanPath}`;
+};
+
 export const MatchConsolePage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     
+    // --- STATE DỮ LIỆU ---
     const [match, setMatch] = useState<any>(null);
     const [homePlayers, setHomePlayers] = useState<any[]>([]);
     const [awayPlayers, setAwayPlayers] = useState<any[]>([]);
-    const [currentPlayers, setCurrentPlayers] = useState<any[]>([]); 
+    const [loading, setLoading] = useState(true);
     
-    // Form Sự kiện
-    const [event, setEvent] = useState({ type: 'GOAL', teamId: '', playerId: '', minute: '' });
-    const [loading, setLoading] = useState(false);
+    // --- STATE THỜI GIAN ---
+    const [currentMinute, setCurrentMinute] = useState(0);
 
-    // 1. Load dữ liệu khi vào trang
+    // --- STATE MODAL THAY NGƯỜI ---
+    const [showSubModal, setShowSubModal] = useState(false);
+    const [subTeamId, setSubTeamId] = useState<number | null>(null);
+    const [playerOut, setPlayerOut] = useState<any>(null);
+    const [playerIn, setPlayerIn] = useState<any>(null);
+    const [actionMinute, setActionMinute] = useState(''); 
+
+    // 1. Load dữ liệu
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -25,13 +41,15 @@ export const MatchConsolePage = () => {
                 const matchRes = await axiosClient.get(`/champions/match/${id}`);
                 setMatch(matchRes.data);
 
-                // Lấy danh sách cầu thủ 2 đội (Để chọn người ghi bàn)
-                const homeRes = await axiosClient.get(`/champions/player/by-team/${matchRes.data.homeTeamId}`);
+                // Lấy danh sách cầu thủ 2 đội
+                const [homeRes, awayRes] = await Promise.all([
+                    axiosClient.get(`/champions/player/by-team/${matchRes.data.homeTeamId}`),
+                    axiosClient.get(`/champions/player/by-team/${matchRes.data.awayTeamId}`)
+                ]);
+                
                 setHomePlayers(homeRes.data);
-
-                const awayRes = await axiosClient.get(`/champions/player/by-team/${matchRes.data.awayTeamId}`);
                 setAwayPlayers(awayRes.data);
-
+                setLoading(false);
             } catch (error) {
                 console.error(error);
                 alert("Lỗi tải dữ liệu trận đấu!");
@@ -41,167 +59,347 @@ export const MatchConsolePage = () => {
         fetchData();
     }, [id]);
 
-    // 2. Bắt đầu trận đấu (Nếu chưa bắt đầu)
+    // 2. Timer giả lập (Tự tăng phút nếu trận đang LIVE)
+    useEffect(() => {
+        let interval: any;
+        if (match?.status === 'IN_PROGRESS') {
+            interval = setInterval(() => {
+                setCurrentMinute(prev => (prev < 90 ? prev + 1 : prev));
+            }, 60000); // 1 phút thật = 1 phút game
+        }
+        return () => clearInterval(interval);
+    }, [match?.status]);
+
+    // 3. Helper: Chia đội hình (Đá chính / Dự bị)
+    // Tạm thời lấy 7 người đầu là đá chính
+    const getSquad = (allPlayers: any[]) => {
+        return {
+            onPitch: allPlayers.slice(0, 7), 
+            bench: allPlayers.slice(7)       
+        };
+    };
+
+    // --- CÁC HÀM XỬ LÝ ---
+
+    // A. Bắt đầu trận đấu
     const handleStartMatch = async () => {
         if(!confirm("Bắt đầu trận đấu? Trạng thái sẽ chuyển sang LIVE.")) return;
         try {
             await axiosClient.post(`/champions/match/${id}/start`);
-            setMatch({...match, status: 'IN_PROGRESS'}); // Update UI
-            alert("Trận đấu đã bắt đầu! ⚽");
-        } catch (e) { 
-            
-            console.error(e);
-            alert("Lỗi bắt đầu trận đấu (Có thể đã bắt đầu rồi)."); }
+            setMatch({...match, status: 'IN_PROGRESS'});
+            alert("▶ Trận đấu đã bắt đầu!");
+        } catch (e) { alert("Lỗi bắt đầu trận đấu."); }
     };
 
-    // 3. Xử lý gửi sự kiện (Bàn thắng / Thẻ)
-    const handleEventSubmit = async () => {
-        if(!event.teamId || !event.playerId || !event.minute) return alert("Vui lòng nhập đủ thông tin!");
-        
-        setLoading(true);
+    // B. Kết thúc trận đấu
+    const handleFinishMatch = async () => {
+        if(!confirm("⚠️ XÁC NHẬN KẾT THÚC TRẬN ĐẤU?\nKết quả sẽ được lưu và cập nhật BXH.")) return;
         try {
-            await axiosClient.post('/champions/match/events', { 
-                matchId: id,
-                type: event.type,
-                teamId: Number(event.teamId),
-                playerId: Number(event.playerId),
-                minute: Number(event.minute)
+            await axiosClient.post(`/champions/match/${id}/finish`);
+            setMatch({...match, status: 'FINISHED'});
+            alert("🏁 Trận đấu đã kết thúc!");
+            navigate('/admin/matches');
+        } catch (e) { alert("Lỗi kết thúc trận đấu."); }
+    };
+
+    // C. Mở Modal Thay người
+    const openSubModal = (teamId: number) => {
+        setSubTeamId(teamId);
+        setPlayerOut(null);
+        setPlayerIn(null);
+        setActionMinute(currentMinute.toString()); // Tự điền phút hiện tại
+        setShowSubModal(true);
+    };
+
+    // D. Xử lý Thay người (Subsitution)
+    const handleSubmitSub = async () => {
+        if (!playerOut || !playerIn || !actionMinute) return alert("Vui lòng chọn đủ thông tin!");
+
+        try {
+            // 👇 SỬA LẠI ĐÚNG API CŨ: /champions/match/events
+            await axiosClient.post('/champions/match/events', {
+                matchId: match.id,
+                teamId: subTeamId,
+                playerId: playerIn.id, // Người VÀO sân
+                type: 'SUBSTITUTION',
+                minute: Number(actionMinute)
             });
-            
-            alert("✅ Đã ghi nhận sự kiện!");
-            
-            // Nếu là bàn thắng -> Cập nhật tỉ số trên màn hình ngay lập tức
-            if (event.type === 'GOAL') {
-                if (Number(event.teamId) === match.homeTeamId) {
-                    setMatch({ ...match, homeScore: match.homeScore + 1 });
-                } else {
-                    setMatch({ ...match, awayScore: match.awayScore + 1 });
+
+            // Cập nhật UI (Hoán đổi vị trí trong mảng local)
+            const updateList = (prevList: any[]) => {
+                const newList = [...prevList];
+                const idxOut = newList.findIndex(p => p.id === playerOut.id);
+                const idxIn = newList.findIndex(p => p.id === playerIn.id);
+                if (idxOut !== -1 && idxIn !== -1) {
+                    // Swap vị trí
+                    [newList[idxOut], newList[idxIn]] = [newList[idxIn], newList[idxOut]]; 
                 }
-            }
-            
-            setEvent({...event, minute: ''}); // Reset phút
-        } catch (e) { 
-            console.error(e);
-            alert("❌ Lỗi hệ thống!"); 
-        } finally {
-            setLoading(false);
+                return newList;
+            };
+
+            if (subTeamId === match.homeTeamId) setHomePlayers(prev => updateList(prev));
+            else setAwayPlayers(prev => updateList(prev));
+
+            alert(`✅ Thay người thành công!`);
+            setShowSubModal(false);
+        } catch (error) { 
+            console.error(error); 
+            alert("Lỗi thay người! (Hãy chắc chắn Backend có Enum SUBSTITUTION)"); 
         }
     };
 
-    // 4. Kết thúc trận đấu
-    const finishMatch = async () => {
-        if(!confirm("⚠️ XÁC NHẬN KẾT THÚC TRẬN ĐẤU?\nBXH sẽ được cập nhật và không thể thay đổi tỉ số nữa.")) return;
+    // E. Xử lý sự kiện nhanh (Bàn thắng / Thẻ)
+    const handleQuickEvent = async (type: string, teamId: number, player: any) => {
+        const minute = prompt(`Nhập phút cho sự kiện ${type === 'GOAL' ? 'Bàn thắng' : 'Thẻ'}:`, currentMinute.toString());
+        if (!minute) return;
+
         try {
-            await axiosClient.post(`/champions/match/${id}/finish`);
-            alert("🏁 Trận đấu đã kết thúc!");
-            navigate('/admin/matches'); // Quay về danh sách
-        } catch (e) { 
-            
-            console.error(e);
-            alert("Lỗi kết thúc trận đấu!"); }
+            // 👇 SỬA LẠI ĐÚNG API CŨ: /champions/match/events
+            await axiosClient.post('/champions/match/events', {
+                matchId: match.id,
+                type: type,
+                teamId: teamId,
+                playerId: player.id,
+                minute: Number(minute)
+            });
+
+            alert(`✅ Đã ghi nhận: ${type} - ${player.name} (Phút ${minute})`);
+
+            // Cập nhật tỉ số ngay lập tức nếu là bàn thắng
+            if (type === 'GOAL') {
+                if (teamId === match.homeTeamId) setMatch({...match, homeScore: match.homeScore + 1});
+                else setMatch({...match, awayScore: match.awayScore + 1});
+            }
+        } catch (error) { 
+            console.error(error); 
+            alert("Lỗi ghi sự kiện!"); 
+        }
     };
 
-    // Chọn đội để hiển thị cầu thủ tương ứng
-    const handleSelectTeam = (teamId: number, isHome: boolean) => {
-        setEvent({ ...event, teamId: teamId.toString(), playerId: '' });
-        setCurrentPlayers(isHome ? homePlayers : awayPlayers);
-    };
+    if (loading || !match) return <div className="text-center py-20 font-bold text-gray-500">⏳ Đang tải Console...</div>;
 
-    if (!match) return <div className="text-center p-10">Đang tải...</div>;
+    // Phân tách đội hình
+    const homeSquad = getSquad(homePlayers);
+    const awaySquad = getSquad(awayPlayers);
+    
+    // Squad cho Modal thay người
+    const modalSquad = subTeamId === match.homeTeamId ? homeSquad : awaySquad;
+    const modalTeamName = subTeamId === match.homeTeamId ? match.homeTeam : match.awayTeam;
 
     return (
-        <div className="max-w-4xl mx-auto p-4 animate-fade-in-up">
-             <button onClick={() => navigate('/admin/matches')} className="mb-4 bg-white border px-4 py-2 rounded shadow-sm hover:bg-gray-100">← Quay lại danh sách</button>
-             
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                {/* Header Tỉ số */}
-                <div className="bg-slate-900 text-white p-6 text-center">
-                    <div className="flex justify-between items-center mb-4">
-                        <span className="bg-slate-700 px-3 py-1 rounded text-xs">Vòng: {match.roundName}</span>
-                        {match.status === 'SCHEDULED' && <button onClick={handleStartMatch} className="bg-green-600 hover:bg-green-500 px-4 py-1 rounded font-bold animate-pulse">▶ BẮT ĐẦU TRẬN ĐẤU</button>}
-                        {match.status === 'IN_PROGRESS' && <span className="bg-red-600 px-3 py-1 rounded font-bold animate-pulse">● LIVE</span>}
-                        {match.status === 'FINISHED' && <span className="bg-gray-600 px-3 py-1 rounded font-bold">FINISHED</span>}
+        <div className="min-h-screen bg-gray-100 p-4 pb-20 animate-fade-in">
+            {/* --- HEADER TỈ SỐ & ĐIỀU KHIỂN CHÍNH --- */}
+            <div className="bg-slate-900 text-white p-4 rounded-xl shadow-xl mb-6 sticky top-2 z-20 border-b-4 border-blue-500">
+                <div className="flex justify-between items-center text-center">
+                    
+                    {/* ĐỘI NHÀ */}
+                    <div className="w-1/3 flex flex-col items-center">
+                        <img src={getImageUrl(match.homeLogo)} className="w-16 h-16 bg-white rounded-full p-1 object-contain mb-2"/>
+                        <h2 className="text-xl font-black uppercase">{match.homeTeam}</h2>
                     </div>
 
-                    <div className="flex justify-center items-center gap-4 md:gap-12 text-3xl font-black text-yellow-400">
-                        <div className="text-center w-1/3">
-                            <div className="text-white text-lg md:text-2xl font-bold mb-2">{match.homeTeam}</div>
-                            <div className="text-5xl md:text-7xl">{match.homeScore}</div>
+                    {/* TỈ SỐ & TRẠNG THÁI */}
+                    <div className="w-1/3 flex flex-col items-center">
+                        <div className="bg-black/50 px-4 py-1 rounded-full text-xs font-mono text-green-400 mb-2 border border-green-900">
+                            {match.status === 'SCHEDULED' ? 'CHƯA BẮT ĐẦU' : match.status === 'IN_PROGRESS' ? `LIVE: ${currentMinute}'` : 'KẾT THÚC'}
                         </div>
-                        <span className="text-gray-500 text-xl">-</span>
-                        <div className="text-center w-1/3">
-                            <div className="text-white text-lg md:text-2xl font-bold mb-2">{match.awayTeam}</div>
-                            <div className="text-5xl md:text-7xl">{match.awayScore}</div>
+                        
+                        <div className="text-6xl font-black tracking-widest leading-none mb-2">
+                            {match.homeScore} - {match.awayScore}
+                        </div>
+
+                        {/* Nút Bắt đầu / Kết thúc */}
+                        <div className="mt-2">
+                            {match.status === 'SCHEDULED' && (
+                                <button onClick={handleStartMatch} className="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded shadow-lg animate-pulse">
+                                    ▶ BẮT ĐẦU TRẬN ĐẤU
+                                </button>
+                            )}
+                            {match.status === 'IN_PROGRESS' && (
+                                <button onClick={handleFinishMatch} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2 rounded shadow-lg border border-red-400">
+                                    🏁 KẾT THÚC TRẬN ĐẤU
+                                </button>
+                            )}
+                            {match.status === 'FINISHED' && (
+                                <button onClick={() => navigate('/admin/matches')} className="bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold px-4 py-2 rounded">
+                                    ← Về danh sách
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ĐỘI KHÁCH */}
+                    <div className="w-1/3 flex flex-col items-center">
+                        <img src={getImageUrl(match.awayLogo)} className="w-16 h-16 bg-white rounded-full p-1 object-contain mb-2"/>
+                        <h2 className="text-xl font-black uppercase">{match.awayTeam}</h2>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- KHU VỰC CONSOLE 2 CỘT (Chỉ hiện khi trận đang LIVE hoặc đã xong) --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* === CỘT ĐỘI NHÀ === */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-blue-700 text-white p-3 font-bold flex justify-between items-center shadow-md">
+                        <span>🏠 HOME SQUAD</span>
+                        {match.status === 'IN_PROGRESS' && (
+                            <button onClick={() => openSubModal(match.homeTeamId)} className="bg-white text-blue-700 px-3 py-1 rounded text-xs font-black hover:bg-blue-50 shadow transition">
+                                ⇄ THAY NGƯỜI
+                            </button>
+                        )}
+                    </div>
+                    <div className="p-2">
+                        {/* List Cầu thủ Trên sân */}
+                        <div className="space-y-2 mb-4">
+                            {homeSquad.onPitch.map(p => (
+                                <div key={p.id} className="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-100 hover:border-blue-300 transition group">
+                                    <div className="flex items-center gap-3">
+                                        <span className="font-black text-blue-900 w-6 text-lg">#{p.shirtNumber}</span>
+                                        <div>
+                                            <div className="font-bold text-sm text-gray-800">{p.name}</div>
+                                            <div className="text-[10px] text-gray-500 uppercase font-bold">{p.position}</div>
+                                        </div>
+                                    </div>
+                                    {/* Nút thao tác nhanh */}
+                                    {match.status === 'IN_PROGRESS' && (
+                                        <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleQuickEvent('GOAL', match.homeTeamId, p)} className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-green-600 shadow">⚽</button>
+                                            <button onClick={() => handleQuickEvent('YELLOW_CARD', match.homeTeamId, p)} className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded hover:bg-yellow-500 shadow">🟨</button>
+                                            <button onClick={() => handleQuickEvent('RED_CARD', match.homeTeamId, p)} className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-red-600 shadow">🟥</button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {/* List Dự bị */}
+                        <div className="bg-gray-50 p-2 rounded-lg">
+                            <h4 className="text-[10px] font-bold text-gray-400 uppercase mb-2">Dự bị (Bench)</h4>
+                            <div className="grid grid-cols-2 gap-2">
+                                {homeSquad.bench.map(p => (
+                                    <div key={p.id} className="text-xs flex gap-1 p-1 items-center text-gray-500">
+                                        <span className="font-bold">#{p.shirtNumber}</span>
+                                        <span className="truncate">{p.name}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
-                
-                {/* Form Điều khiển */}
-                <div className="p-6 md:p-8 grid gap-8 pointer-events-auto">
-                    {/* Chỉ cho phép nhập liệu khi trận đang diễn ra */}
-                    {match.status !== 'IN_PROGRESS' && match.status !== 'FINISHED' && (
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-yellow-700">
-                            Vui lòng bấm nút <b>"BẮT ĐẦU TRẬN ĐẤU"</b> ở trên để mở khóa chức năng ghi sự kiện.
-                        </div>
-                    )}
 
-                    {match.status === 'IN_PROGRESS' && (
-                        <>
-                            {/* 1. Loại Sự Kiện */}
-                            <div>
-                                <label className="block font-bold text-sm text-gray-400 mb-2 uppercase">1. Chọn Sự Kiện</label>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {['GOAL', 'YELLOW_CARD', 'RED_CARD'].map((type) => (
-                                        <button key={type} onClick={() => setEvent({...event, type})}
-                                            className={`py-3 rounded-xl font-bold border-2 transition ${event.type === type 
-                                                ? (type === 'GOAL' ? 'border-green-500 bg-green-50 text-green-700' : type === 'YELLOW_CARD' ? 'border-yellow-400 bg-yellow-50 text-yellow-700' : 'border-red-500 bg-red-50 text-red-700')
-                                                : 'border-gray-100 hover:bg-gray-50'}`}>
-                                            {type === 'GOAL' ? '⚽ BÀN THẮNG' : type === 'YELLOW_CARD' ? '🟨 THẺ VÀNG' : '🟥 THẺ ĐỎ'}
-                                        </button>
+                {/* === CỘT ĐỘI KHÁCH === */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-red-700 text-white p-3 font-bold flex justify-between items-center shadow-md">
+                        <span>✈️ AWAY SQUAD</span>
+                        {match.status === 'IN_PROGRESS' && (
+                            <button onClick={() => openSubModal(match.awayTeamId)} className="bg-white text-red-700 px-3 py-1 rounded text-xs font-black hover:bg-red-50 shadow transition">
+                                ⇄ THAY NGƯỜI
+                            </button>
+                        )}
+                    </div>
+                    <div className="p-2">
+                         {/* List Cầu thủ Trên sân */}
+                         <div className="space-y-2 mb-4">
+                            {awaySquad.onPitch.map(p => (
+                                <div key={p.id} className="flex items-center justify-between p-2 bg-red-50 rounded-lg border border-red-100 hover:border-red-300 transition group">
+                                    <div className="flex items-center gap-3">
+                                        <span className="font-black text-red-900 w-6 text-lg">#{p.shirtNumber}</span>
+                                        <div>
+                                            <div className="font-bold text-sm text-gray-800">{p.name}</div>
+                                            <div className="text-[10px] text-gray-500 uppercase font-bold">{p.position}</div>
+                                        </div>
+                                    </div>
+                                    {/* Nút thao tác nhanh */}
+                                    {match.status === 'IN_PROGRESS' && (
+                                        <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleQuickEvent('GOAL', match.awayTeamId, p)} className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-green-600 shadow">⚽</button>
+                                            <button onClick={() => handleQuickEvent('YELLOW_CARD', match.awayTeamId, p)} className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded hover:bg-yellow-500 shadow">🟨</button>
+                                            <button onClick={() => handleQuickEvent('RED_CARD', match.awayTeamId, p)} className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-red-600 shadow">🟥</button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                         {/* List Dự bị */}
+                         <div className="bg-gray-50 p-2 rounded-lg">
+                            <h4 className="text-[10px] font-bold text-gray-400 uppercase mb-2">Dự bị (Bench)</h4>
+                            <div className="grid grid-cols-2 gap-2">
+                                {awaySquad.bench.map(p => (
+                                    <div key={p.id} className="text-xs flex gap-1 p-1 items-center text-gray-500">
+                                        <span className="font-bold">#{p.shirtNumber}</span>
+                                        <span className="truncate">{p.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- MODAL THAY NGƯỜI --- */}
+            {showSubModal && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        {/* Header Modal */}
+                        <div className="bg-slate-900 text-white p-4 text-center relative shadow-md">
+                            <h3 className="font-bold text-lg uppercase flex items-center justify-center gap-2">
+                                🔄 Thay người: <span className="text-yellow-400">{modalTeamName}</span>
+                            </h3>
+                            <button onClick={() => setShowSubModal(false)} className="absolute right-4 top-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
+                        </div>
+
+                        {/* Body - Grid 2 Cột */}
+                        <div className="p-4 grid grid-cols-2 gap-4 flex-1 overflow-y-auto bg-gray-100">
+                            {/* Cột NGƯỜI RA */}
+                            <div className="bg-white p-3 rounded-xl shadow-sm">
+                                <h4 className="text-center font-black text-red-600 mb-3 uppercase text-sm border-b pb-2">🔻 Người Ra (Out)</h4>
+                                <div className="space-y-2">
+                                    {modalSquad.onPitch.map(p => (
+                                        <div key={p.id} onClick={() => setPlayerOut(p)}
+                                            className={`p-2 rounded-lg border-2 cursor-pointer flex justify-between items-center transition
+                                                ${playerOut?.id === p.id ? 'bg-red-50 border-red-500' : 'border-transparent hover:bg-gray-50 hover:border-gray-200'}`}>
+                                            <span className="font-bold text-slate-700">#{p.shirtNumber}</span>
+                                            <span className="text-sm font-medium">{p.name}</span>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* 2. Đội Bóng */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <button onClick={() => handleSelectTeam(match.homeTeamId, true)}
-                                    className={`p-4 rounded-xl border-2 font-bold text-lg transition ${Number(event.teamId) === match.homeTeamId ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 hover:bg-gray-50'}`}>
-                                    {match.homeTeam}
-                                </button>
-                                <button onClick={() => handleSelectTeam(match.awayTeamId, false)}
-                                    className={`p-4 rounded-xl border-2 font-bold text-lg transition ${Number(event.teamId) === match.awayTeamId ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 hover:bg-gray-50'}`}>
-                                    {match.awayTeam}
+                            {/* Cột NGƯỜI VÀO */}
+                            <div className="bg-white p-3 rounded-xl shadow-sm">
+                                <h4 className="text-center font-black text-green-600 mb-3 uppercase text-sm border-b pb-2">💚 Người Vào (In)</h4>
+                                <div className="space-y-2">
+                                    {modalSquad.bench.map(p => (
+                                        <div key={p.id} onClick={() => setPlayerIn(p)}
+                                            className={`p-2 rounded-lg border-2 cursor-pointer flex justify-between items-center transition
+                                                ${playerIn?.id === p.id ? 'bg-green-50 border-green-500' : 'border-transparent hover:bg-gray-50 hover:border-gray-200'}`}>
+                                            <span className="font-bold text-slate-700">#{p.shirtNumber}</span>
+                                            <span className="text-sm font-medium">{p.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Modal */}
+                        <div className="p-4 bg-white border-t flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                            <div className="flex items-center gap-2 bg-gray-100 p-2 rounded-lg">
+                                <label className="font-bold text-sm text-gray-600">Phút:</label>
+                                <input type="number" className="w-16 bg-white border border-gray-300 rounded p-1 text-center font-bold"
+                                    value={actionMinute} onChange={e => setActionMinute(e.target.value)} />
+                            </div>
+                            <div className="flex gap-3">
+                                <button onClick={() => setShowSubModal(false)} className="px-5 py-2 bg-gray-200 rounded-lg font-bold text-gray-600 hover:bg-gray-300 transition">Hủy</button>
+                                <button onClick={handleSubmitSub} disabled={!playerIn || !playerOut}
+                                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-bold hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition transform active:scale-95">
+                                    XÁC NHẬN
                                 </button>
                             </div>
-
-                            {/* 3. Cầu thủ & Phút */}
-                            <div className="flex gap-4">
-                                <select className="w-2/3 border-2 border-gray-200 p-3 rounded-xl font-bold outline-none focus:border-blue-500"
-                                    value={event.playerId} onChange={e => setEvent({...event, playerId: e.target.value})} disabled={!event.teamId}>
-                                    <option value="">-- Chọn cầu thủ --</option>
-                                    {currentPlayers.map(p => <option key={p.id} value={p.id}>(#{p.shirtNumber}) {p.name}</option>)}
-                                </select>
-                                <input type="number" className="w-1/3 border-2 border-gray-200 p-3 rounded-xl font-bold text-center outline-none focus:border-blue-500"
-                                    placeholder="Phút..." value={event.minute} onChange={e => setEvent({...event, minute: e.target.value})} />
-                            </div>
-                            
-                            <button onClick={handleEventSubmit} disabled={loading} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg mt-2">
-                                ✅ XÁC NHẬN
-                            </button>
-                        </>
-                    )}
+                        </div>
+                    </div>
                 </div>
-
-                <div className="bg-gray-50 p-6 border-t border-gray-200 text-center">
-                    {match.status === 'IN_PROGRESS' ? (
-                        <button onClick={finishMatch} className="text-red-600 font-bold hover:bg-red-100 px-6 py-2 rounded-lg border border-red-200 transition">
-                            🏁 KẾT THÚC TRẬN ĐẤU
-                        </button>
-                    ) : match.status === 'FINISHED' ? (
-                        <span className="text-green-600 font-bold">Trận đấu đã kết thúc.</span>
-                    ) : null}
-                </div>
-            </div>
+            )}
         </div>
     );
 };
