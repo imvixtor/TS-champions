@@ -4,6 +4,7 @@ import com.example.football_manager.common.baseEntity.Enum.TournamentStatus;
 import com.example.football_manager.modules.team.entity.Team;
 import com.example.football_manager.modules.team.repository.TeamRepository;
 import com.example.football_manager.modules.tournament.dto.AddTeamRequest;
+import com.example.football_manager.modules.tournament.dto.ManualDrawRequest;
 import com.example.football_manager.modules.tournament.dto.StandingResponse;
 import com.example.football_manager.modules.tournament.dto.TournamentRequest;
 import com.example.football_manager.modules.tournament.entity.Tournament;
@@ -17,10 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,30 +64,39 @@ public class TournamentServiceImpl implements TournamentService {
         }
     }
 
+
     @Override
-    public void autoDrawGroups(Integer tournamentId, int numberOfGroups){
-        List<TournamentTeam> participants = tournamentTeamRepository.findByTournamentId(tournamentId);
+    @Transactional
+    public void autoDrawGroups(Integer tournamentId, int groupCount) {
+        List<TournamentTeam> allTeams = tournamentTeamRepository.findByTournamentId(tournamentId);
 
-        if(participants.isEmpty()){
-            throw new RuntimeException("Chưa có đội nào tham gia giải!");
+        if (allTeams.isEmpty()) return;
+
+        List<TournamentTeam> seeds = allTeams.stream().filter(TournamentTeam::isSeeded).collect(Collectors.toList());
+        List<TournamentTeam> regulars = allTeams.stream().filter(t -> !t.isSeeded()).collect(Collectors.toList());
+
+        Collections.shuffle(seeds);
+        Collections.shuffle(regulars);
+
+        List<String> groupNames = new ArrayList<>();
+        for (int i = 0; i < groupCount; i++) {
+            groupNames.add("Group " + (char)('A' + i));
         }
 
-        //Random danh sách
-        Collections.shuffle(participants);
+        int groupIndex = 0;
+        for (TournamentTeam seed : seeds) {
+            seed.setGroupName(groupNames.get(groupIndex));
+            tournamentTeamRepository.save(seed);
 
-        String[] groupNames = {"A", "B", "C", "D", "E", "F", "G", "H"};
-        if (numberOfGroups > groupNames.length) {
-            throw new RuntimeException("Hệ thống chỉ hỗ trợ tối đa 8 bảng đấu");
+            groupIndex = (groupIndex + 1) % groupCount;
         }
 
-        for (int i=0; i<participants.size(); i++){
-            String assignedGroup = groupNames[i % numberOfGroups];
-            TournamentTeam tt = participants.get(i);
-            tt.setGroupName(assignedGroup);
+        for (TournamentTeam reg : regulars) {
+            reg.setGroupName(groupNames.get(groupIndex));
+            tournamentTeamRepository.save(reg);
+
+            groupIndex = (groupIndex + 1) % groupCount;
         }
-
-        tournamentTeamRepository.saveAll(participants);
-
     }
 
     @Override
@@ -123,12 +130,60 @@ public class TournamentServiceImpl implements TournamentService {
         return tournamentRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
+    @Override
+    public void manualDraw(Integer tournamentId, ManualDrawRequest request) {
+        TournamentTeam tt = tournamentTeamRepository.findByTournamentIdAndTeamId(tournamentId, request.getTeamId())
+                .orElseThrow(() -> new RuntimeException("Đội bóng này chưa được thêm vào giải đấu!"));
+
+        tt.setGroupName(request.getGroupName());
+        tournamentTeamRepository.save(tt);
+    }
+
+    @Override
+    @Transactional
+    public void toggleSeed(Integer tournamentId, Integer teamId) {
+        TournamentTeam tt = tournamentTeamRepository.findByTournamentIdAndTeamId(tournamentId, teamId)
+                .orElseThrow(() -> new RuntimeException("Đội bóng không tồn tại trong giải!"));
+
+        tt.setSeeded(!tt.isSeeded());
+        tournamentTeamRepository.save(tt);
+    }
+
+    // ... (Các phần cũ giữ nguyên)
+
+    @Override
+    public Tournament update(Integer id, TournamentRequest request) {
+        Tournament t = getById(id); // Hàm này đã check tồn tại rồi
+        t.setName(request.getName());
+        t.setStartDate(request.getStartDate());
+        t.setEndDate(request.getEndDate());
+//        t.setStatus(request.getStatus());
+
+        return tournamentRepository.save(t);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Integer id) {
+        if (!tournamentRepository.existsById(id)) {
+            throw new RuntimeException("Giải đấu không tồn tại");
+        }
+
+        List<TournamentTeam> relatedTeams = tournamentTeamRepository.findByTournamentId(id);
+        tournamentTeamRepository.deleteAll(relatedTeams);
+
+        // matchRepository.deleteByTournamentId(id);
+
+        tournamentRepository.deleteById(id);
+    }
+
     private StandingResponse mapToStandingResponse(TournamentTeam tt) {
         StandingResponse res = new StandingResponse();
         res.setTeamId(tt.getTeam().getId());
         res.setTeamName(tt.getTeam().getName());
         res.setTeamLogo(tt.getTeam().getLogoUrl());
         res.setGroupName(tt.getGroupName());
+        res.setSeeded(tt.isSeeded());
 
         res.setPoints(tt.getPoints());
         res.setPlayed(tt.getPlayed());

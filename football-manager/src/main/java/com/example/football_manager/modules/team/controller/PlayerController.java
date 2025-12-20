@@ -19,7 +19,7 @@ import java.util.List;
 public class PlayerController {
     private final PlayerService playerService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'COACH')")
     @PostMapping(value = "/create", consumes = "multipart/form-data")
     public ResponseEntity<PlayerResponse> createPlayer(@RequestPart("player") PlayerRequest player,
                                                        @RequestPart(value = "avatar", required = false)MultipartFile avatarFile){
@@ -27,13 +27,13 @@ public class PlayerController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'COACH')")
     @GetMapping("/by-team/{teamId}")
     public ResponseEntity<List<PlayerResponse>> getPlayerByTeam(@PathVariable Integer teamId){
         return ResponseEntity.ok(playerService.getPlayersByTeam(teamId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'COACH')")
     @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
     public ResponseEntity<PlayerResponse> updatePlayer(@PathVariable Integer id,
                                                        @RequestPart("player") PlayerRequest player,
@@ -43,14 +43,14 @@ public class PlayerController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deletePlayer(@PathVariable Integer id) {
         playerService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'COACH')")
     @GetMapping("/{id}")
     public ResponseEntity<PlayerResponse> getPlayerDetail(@PathVariable Integer id){
         return ResponseEntity.ok(playerService.findById(id));

@@ -3,9 +3,14 @@ package com.example.football_manager.modules.team.service.impl;
 import com.example.football_manager.modules.team.dto.Map.TeamMapper;
 import com.example.football_manager.modules.team.dto.TeamRequest;
 import com.example.football_manager.modules.team.dto.TeamResponse;
+import com.example.football_manager.modules.team.entity.Player;
 import com.example.football_manager.modules.team.entity.Team;
+import com.example.football_manager.modules.team.repository.PlayerRepository;
 import com.example.football_manager.modules.team.repository.TeamRepository;
 import com.example.football_manager.modules.team.service.TeamService;
+import com.example.football_manager.modules.tournament.entity.TournamentTeam;
+import com.example.football_manager.modules.tournament.repository.TournamentTeamRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +32,8 @@ public class TeamServiceImpl implements TeamService {
     private String uploadDir;
 
     @Autowired private TeamRepository teamRepository;
+    @Autowired private PlayerRepository playerRepository;
+    @Autowired private TournamentTeamRepository tournamentTeamRepository;
 
     private String saveLogo(MultipartFile logoFile) {
         if (logoFile == null || logoFile.isEmpty()) {
@@ -118,14 +125,19 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public void delete(Integer id){
-            Team team = teamRepository.findById(id).orElseThrow(() -> new RuntimeException("Team not found"));
+    @Transactional // <--- QUAN TRỌNG: Để đảm bảo xóa hết hoặc không xóa gì
+    public void delete(Integer id) {
+        Team team = teamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đội bóng"));
 
-            if (team.getLogoUrl() != null){
-                deleteLogoFile(team.getLogoUrl());
-            }
+        List<Player> players = playerRepository.findByTeamId(id);
+        playerRepository.deleteAll(players);
 
-            teamRepository.delete(team);
+        // 3. Xóa thống kê trong các giải đấu (TournamentTeam)
+        // (Giả sử bạn có TournamentTeamRepository)
+        tournamentTeamRepository.deleteByTeamId(id);
+
+        teamRepository.delete(team);
     }
 
     public List<TeamResponse> findAll(){

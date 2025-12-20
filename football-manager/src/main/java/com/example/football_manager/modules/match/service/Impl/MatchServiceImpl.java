@@ -10,6 +10,7 @@ import com.example.football_manager.modules.match.repository.MatchEventRepositor
 import com.example.football_manager.modules.match.repository.MatchLineupRepository;
 import com.example.football_manager.modules.match.repository.MatchRepository;
 import com.example.football_manager.modules.match.service.MatchService;
+import com.example.football_manager.modules.team.dto.PlayerResponse;
 import com.example.football_manager.modules.team.entity.Team;
 import com.example.football_manager.modules.team.repository.PlayerRepository;
 import com.example.football_manager.modules.team.repository.TeamRepository;
@@ -22,9 +23,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,7 +44,7 @@ public class MatchServiceImpl implements MatchService {
     private final MatchLineupRepository matchLineupRepository;
 
     @Override
-    public Match CreateMatch(CreateMatchRequest request){
+    public Match createMatch(CreateMatchRequest request){
         Tournament tournament = tourRepo.findById(request.getTournamentId()).orElseThrow();
         Team home = teamRepo.findById(request.getHomeTeamId()).orElseThrow();
         Team away = teamRepo.findById(request.getAwayTeamId()).orElseThrow();
@@ -51,18 +56,47 @@ public class MatchServiceImpl implements MatchService {
         match.setMatchDate(request.getMatchDate());
         match.setRoundName(request.getRoundName());
         match.setStatus(MatchStatus.SCHEDULED);
+        match.setHomeScore(0);
+        match.setAwayScore(0);
 
         return matchRepo.save(match);
     }
 
     @Override
+    public void updateMatchInfo(Integer id, UpdateMatchRequest req) {
+        Match match = matchRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trận đấu"));
+
+        if (req.getMatchDate() != null) match.setMatchDate(req.getMatchDate());
+        if (req.getStadium() != null) match.setStadium(req.getStadium());
+
+        if (req.getHomeScore() != null) match.setHomeScore(req.getHomeScore());
+        if (req.getAwayScore() != null) match.setAwayScore(req.getAwayScore());
+
+        if (req.getStatus() != null) match.setStatus(req.getStatus());
+
+        matchRepo.save(match);
+    }
+
+    @Override
+    public void startMatch(Integer id) {
+        Match match = matchRepo.findById(id).orElseThrow();
+        if (match.getStatus() != MatchStatus.SCHEDULED) {
+            throw new RuntimeException("Trận đấu đã bắt đầu hoặc đã kết thúc!");
+        }
+        match.setStatus(MatchStatus.IN_PROGRESS);
+        matchRepo.save(match);
+    }
+
+    @Override
+    @Transactional
     public void addEvent(MatchEventDTO dto){
         Match match = matchRepo.findById(dto.getMatchId())
                 .orElseThrow(() -> new RuntimeException("Match not found"));
 
-    if(match.getStatus() == MatchStatus.FINISHED){
-        throw new RuntimeException("Không thể thêm trận đấy khi đã kết thúc");
-    }
+        if(match.getStatus() == MatchStatus.FINISHED){
+            throw new RuntimeException("Không thể thêm sự kiện khi trận đấu đã kết thúc");
+        }
 
         MatchEvent event = new MatchEvent();
         event.setMatch(match);
@@ -76,21 +110,23 @@ public class MatchServiceImpl implements MatchService {
         if(dto.getType() == EventType.GOAL){
             if (match.getHomeTeam().getId().equals(dto.getTeamId())){
                 match.setHomeScore(match.getHomeScore() + 1);
-            }else {
+            } else {
                 match.setAwayScore(match.getAwayScore() + 1);
             }
-            match.setStatus(MatchStatus.LIVE);
+
+            if (match.getStatus() == MatchStatus.SCHEDULED) {
+                match.setStatus(MatchStatus.IN_PROGRESS);
+            }
             matchRepo.save(match);
         }
     }
-
 
     @Override
     @Transactional
     public void finishMatch(Integer matchId) {
         Match match = matchRepo.findById(matchId).orElseThrow();
 
-        if (match.getStatus() == MatchStatus.FINISHED) return; // Tránh update 2 lần
+        if (match.getStatus() == MatchStatus.FINISHED) return;
 
         match.setStatus(MatchStatus.FINISHED);
         matchRepo.save(match);
@@ -100,52 +136,71 @@ public class MatchServiceImpl implements MatchService {
         updateTournamentTeamStats(match, match.getAwayTeam(), false);
     }
 
+    @Override
+    public List<MatchDetailResponse> getMatchesByTournament(Integer tournamentId, String groupName) {
+        List<Match> matches;
 
-    /// Hàm cập nhật chỉ số cho từng đội trong BXH
-    private void updateTournamentTeamStats(Match match, Team team, boolean isHome) {
-        TournamentTeam tt = tourTeamRepo.findByTournamentIdAndTeamId(
-                        match.getTournament().getId(), team.getId())
-                .orElseThrow(() -> new RuntimeException("Đội bóng không thuộc giải đấu này"));
+        if (groupName != null && !groupName.isEmpty()) {
 
-        /// 1. Cập nhật chỉ số cơ bản
-        tt.setPlayed(tt.getPlayed() + 1);
-
-        int goalsScored = isHome ? match.getHomeScore() : match.getAwayScore();
-        int goalsConceded = isHome ? match.getAwayScore() : match.getHomeScore();
-
-        tt.setGoalsFor(tt.getGoalsFor() + goalsScored);
-        tt.setGoalsAgainst(tt.getGoalsAgainst() + goalsConceded);
-
-        /// 2. Tính điểm (Thắng 3, Hòa 1, Thua 0)
-        if (goalsScored > goalsConceded) {
-            tt.setWon(tt.getWon() + 1);
-            tt.setPoints(tt.getPoints() + 3);
-        } else if (goalsScored == goalsConceded) {
-            tt.setDrawn(tt.getDrawn() + 1);
-            tt.setPoints(tt.getPoints() + 1);
+            matches = matchRepo.findByTournamentIdOrderByMatchDateAsc(tournamentId).stream()
+                    .filter(m -> groupName.equals(m.getGroupName()))
+                    .collect(Collectors.toList());
         } else {
-            tt.setLost(tt.getLost() + 1);
+            matches = matchRepo.findByTournamentIdOrderByMatchDateAsc(tournamentId);
         }
 
-        // 3. Cập nhật thẻ phạt (Tính Fair Play)
-        long yellow = eventRepo.countByMatchIdAndTeamIdAndType(match.getId(), team.getId(), EventType.YELLOW_CARD);
-        long red = eventRepo.countByMatchIdAndTeamIdAndType(match.getId(), team.getId(), EventType.RED_CARD);
+        return matches.stream().map(this::mapToMatchDetailResponse).collect(Collectors.toList());
+    }
 
-        tt.setYellowCards(tt.getYellowCards() + (int)yellow);
-        tt.setRedCards(tt.getRedCards() + (int)red);
+    @Override
+    public MatchDetailResponse getMatchDetail(Integer id) {
+        Match match = matchRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trận đấu với ID: " + id));
 
-        tourTeamRepo.save(tt);
+        return mapToMatchDetailResponse(match);
+    }
+
+    @Override
+    @Transactional
+    public void registerLineup(Integer matchId, LineupRequest req) {
+        matchLineupRepository.deleteByMatchIdAndTeamId(matchId, req.getTeamId());
+
+        Match match = matchRepo.findById(matchId).orElseThrow();
+        Team team = teamRepo.findById(req.getTeamId()).orElseThrow();
+
+        for (Integer playerId : req.getStarterIds()) {
+            saveLineupItem(match, team, playerId, true);
+        }
+        for (Integer playerId : req.getSubIds()) {
+            saveLineupItem(match, team, playerId, false);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void generateGroupStageMatches(Integer tournamentId) {
+        List<TournamentTeam> allTeams = tourTeamRepo.findByTournamentId(tournamentId);
+
+        Map<String, List<Team>> teamsByGroup = allTeams.stream()
+                .collect(Collectors.groupingBy(
+                        TournamentTeam::getGroupName,
+                        Collectors.mapping(TournamentTeam::getTeam, Collectors.toList())
+                ));
+
+        Tournament tournament = tourRepo.findById(tournamentId).orElseThrow();
+
+        for (Map.Entry<String, List<Team>> entry : teamsByGroup.entrySet()) {
+            String groupName = entry.getKey();
+            List<Team> teams = entry.getValue();
+            if (groupName == null || groupName.equals("Chưa chia bảng")) continue;
+
+            createRoundRobinSchedule(tournament, groupName, teams);
+        }
     }
 
     @Override
     public List<TopScorerDTO> getTopScorers(Integer tournamentId) {
         return eventRepo.findTopScorers(tournamentId);
-    }
-
-    @Override
-    public List<MatchDetailResponse> getMatchesByTournament(Integer tournamentId) {
-        List<Match> matches = matchRepo.findByTournamentIdOrderByMatchDateAsc(tournamentId);
-        return matches.stream().map(this::mapToMatchResponse).collect(Collectors.toList());
     }
 
     @Override
@@ -161,54 +216,123 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
-    @Transactional
-    public void registerLineup(Integer matchId, LineupRequest req) {
-        /// Xóa đội hình cũ của đội này trong trận này (nếu có đăng ký lại)
-        matchLineupRepository.deleteByMatchIdAndTeamId(matchId, req.getTeamId());
+    public List<MatchDetailResponse> searchPublicMatches(LocalDate date, Integer tournamentId) {
+        // Nếu không chọn ngày, mặc định lấy ngày hôm nay
+        if (date == null) date = LocalDate.now();
 
-        Match match = matchRepo.findById(matchId).orElseThrow();
-        Team team = teamRepo.findById(req.getTeamId()).orElseThrow();
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
-        /// Lưu Đá chính (IsStarter = true)
-        for (Integer playerId : req.getStarterIds()) {
-            saveLineupItem(match, team, playerId, true);
-        }
+        List<Match> matches = matchRepo.searchMatches(tournamentId, startOfDay, endOfDay);
 
-        /// Lưu Dự bị (IsStarter = false)
-        for (Integer playerId : req.getSubIds()) {
-            saveLineupItem(match, team, playerId, false);
-        }
+        return matches.stream()
+                .map(this::mapToMatchDetailResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public MatchDetailResponse getMatchDetail(Integer id) {
-        /// Tìm trận đấu theo ID
-        Match match = matchRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy trận đấu với ID: " + id));
+    public List<MatchDetailResponse> getMatchesByTeam(Integer teamId) {
+        List<Match> matches = matchRepo.findByTeamId(teamId);
 
-        /// Chuyển đổi Entity sang DTO (MatchDetailResponse)
-        return MatchDetailResponse.builder()
-                .id(match.getId())
-                .matchDate(match.getMatchDate())
-                .stadium(match.getStadium())
-                .roundName(match.getRoundName())
-                .status(match.getStatus().name())
+        return matches.stream()
+                .map(this::mapToMatchDetailResponse) // Hàm map bạn đã có
+                .toList();
+    }
 
-                /// Tỉ số
-                .homeScore(match.getHomeScore())
-                .awayScore(match.getAwayScore())
+    @Override
+    public List<PlayerResponse> getLineupByMatch(Integer matchId, Integer teamId) {
 
-                /// --- THÔNG TIN ĐỘI NHÀ ---
-                .homeTeamId(match.getHomeTeam().getId())
-                .homeTeam(match.getHomeTeam().getName())
-                .homeLogo(match.getHomeTeam().getLogoUrl())
+        return new ArrayList<>();
+    }
 
-                /// --- THÔNG TIN ĐỘI KHÁCH ---
-                .awayTeamId(match.getAwayTeam().getId())
-                .awayTeam(match.getAwayTeam().getName())
-                .awayLogo(match.getAwayTeam().getLogoUrl())
+    // ================== CÁC HÀM HỖ TRỢ (PRIVATE) ==================
 
-                .build();
+    private void updateTournamentTeamStats(Match match, Team team, boolean isHome) {
+        TournamentTeam tt = tourTeamRepo.findByTournamentIdAndTeamId(
+                        match.getTournament().getId(), team.getId())
+                .orElseThrow(() -> new RuntimeException("Đội bóng không thuộc giải đấu này"));
+
+        tt.setPlayed(safe(tt.getPlayed()) + 1);
+
+        int goalsScored = isHome ? match.getHomeScore() : match.getAwayScore();
+        int goalsConceded = isHome ? match.getAwayScore() : match.getHomeScore();
+
+        tt.setGoalsFor(safe(tt.getGoalsFor()) + goalsScored);
+        tt.setGoalsAgainst(safe(tt.getGoalsAgainst()) + goalsConceded);
+        tt.setGd(safe(tt.getGoalsFor()) - safe(tt.getGoalsAgainst()));
+
+        if (goalsScored > goalsConceded) {
+            tt.setWon(safe(tt.getWon()) + 1);
+            tt.setPoints(safe(tt.getPoints()) + 3);
+        } else if (goalsScored == goalsConceded) {
+            tt.setDrawn(safe(tt.getDrawn()) + 1);
+            tt.setPoints(safe(tt.getPoints()) + 1);
+        } else {
+            tt.setLost(safe(tt.getLost()) + 1);
+        }
+
+        long yellow = eventRepo.countByMatchIdAndTeamIdAndType(match.getId(), team.getId(), EventType.YELLOW_CARD);
+        long red = eventRepo.countByMatchIdAndTeamIdAndType(match.getId(), team.getId(), EventType.RED_CARD);
+
+        tt.setYellowCards(safe(tt.getYellowCards()) + (int)yellow);
+        tt.setRedCards(safe(tt.getRedCards()) + (int)red);
+
+        tourTeamRepo.save(tt);
+    }
+
+    private void createRoundRobinSchedule(Tournament tournament, String groupName, List<Team> teams) {
+        int numTeams = teams.size();
+        if (numTeams < 2) return;
+
+        if (numTeams % 2 != 0) {
+            teams.add(null);
+            numTeams++;
+        }
+
+        int numRounds = numTeams - 1;
+        int halfSize = numTeams / 2;
+
+        List<Team> rotatingTeams = new ArrayList<>(teams);
+        Team fixedTeam = rotatingTeams.remove(0);
+
+        LocalDateTime startDate = tournament.getStartDate().atTime(19, 0);
+
+        for (int round = 0; round < numRounds; round++) {
+            String roundName = "Vòng " + (round + 1);
+            LocalDateTime roundDate = startDate.plusDays(round * 7); // Mỗi vòng cách nhau 1 tuần
+
+            int teamIdx = round % rotatingTeams.size();
+            Team p2 = rotatingTeams.get(teamIdx);
+            if (p2 != null) {
+                createMatchEntity(tournament, fixedTeam, p2, groupName, roundName, roundDate);
+            }
+
+            for (int i = 1; i < halfSize; i++) {
+                int firstTeamIdx = (round + i) % rotatingTeams.size();
+                int secondTeamIdx = (round + rotatingTeams.size() - i) % rotatingTeams.size();
+
+                Team t1 = rotatingTeams.get(firstTeamIdx);
+                Team t2 = rotatingTeams.get(secondTeamIdx);
+
+                if (t1 != null && t2 != null) {
+                    createMatchEntity(tournament, t1, t2, groupName, roundName, roundDate);
+                }
+            }
+        }
+    }
+
+    private void createMatchEntity(Tournament t, Team home, Team away, String group, String round, LocalDateTime time) {
+        Match match = new Match();
+        match.setTournament(t);
+        match.setHomeTeam(home);
+        match.setAwayTeam(away);
+        match.setGroupName(group);
+        match.setRoundName(round);
+        match.setMatchDate(time);
+        match.setStatus(MatchStatus.SCHEDULED);
+        match.setHomeScore(0);
+        match.setAwayScore(0);
+        matchRepo.save(match);
     }
 
     private void saveLineupItem(Match m, Team t, Integer pId, boolean isStarter) {
@@ -220,47 +344,62 @@ public class MatchServiceImpl implements MatchService {
         matchLineupRepository.save(lineup);
     }
 
-
-/// các hàm hỗ trợ
-
-    private MatchDetailResponse mapToMatchDetailResponse(Match match) {
-        MatchDetailResponse dto = new MatchDetailResponse();
-        dto.setId(match.getId());
-
-        /// Map thông tin Đội nhà
-        dto.setHomeTeam(match.getHomeTeam().getName());
-        dto.setHomeLogo(match.getHomeTeam().getLogoUrl());
-
-        /// Map thông tin Đội khách
-        dto.setAwayTeam(match.getAwayTeam().getName());
-        dto.setAwayLogo(match.getAwayTeam().getLogoUrl());
-
-        /// Map thông tin Trận đấu
-        dto.setMatchDate(match.getMatchDate());
-        dto.setRoundName(match.getRoundName());
-        dto.setStadium(match.getStadium());
-        dto.setHomeScore(match.getHomeScore());
-        dto.setAwayScore(match.getAwayScore());
-
-        /// Chuyển Enum thành String (SCHEDULED, LIVE, FINISHED)
-        dto.setStatus(match.getStatus().name());
-
-        return dto;
+    private int safe(Integer value) {
+        return value == null ? 0 : value;
     }
 
+    private MatchDetailResponse mapToMatchDetailResponse(Match match) {
+        MatchDetailResponse response = new MatchDetailResponse();
+
+        response.setId(match.getId());
+        response.setMatchDate(match.getMatchDate());
+        response.setStadium(match.getStadium());
+        response.setStatus(match.getStatus().name());
+
+        response.setHomeScore(match.getHomeScore() != null ? match.getHomeScore() : 0);
+        response.setAwayScore(match.getAwayScore() != null ? match.getAwayScore() : 0);
+
+        if (match.getHomeTeam() != null) {
+            response.setHomeTeamId(match.getHomeTeam().getId());
+            response.setHomeTeam(match.getHomeTeam().getName());
+            response.setHomeLogo(match.getHomeTeam().getLogoUrl());
+        } else {
+            response.setHomeTeamId(0);
+            response.setHomeTeam("Đội ẩn");
+            response.setHomeLogo(null);
+        }
+
+        if (match.getAwayTeam() != null) {
+            response.setAwayTeamId(match.getAwayTeam().getId());
+            response.setAwayTeam(match.getAwayTeam().getName());
+            response.setAwayLogo(match.getAwayTeam().getLogoUrl());
+        } else {
+            response.setAwayTeamId(0);
+            response.setAwayTeam("Đội ẩn");
+            response.setAwayLogo(null);
+        }
+
+        if (match.getEvents() != null) {
+            response.setEvents(match.getEvents().stream()
+                    .filter(evt -> evt.getTeam() != null && evt.getPlayer() != null) // Lọc sự kiện rác
+                    .map(evt -> new MatchEventResponse(
+                            evt.getType(),
+                            evt.getMinute(),
+                            evt.getTeam().getId(),
+                            evt.getPlayer().getName(),
+                            evt.getPlayer().getShirtNumber()
+                    ))
+                    .sorted(Comparator.comparing(MatchEventResponse::getMinute))
+                    .collect(Collectors.toList()));
+        } else {
+            response.setEvents(new ArrayList<>());
+        }
+
+        return response;
+    }
+
+    // Tôi đã hợp nhất 2 hàm map trùng lặp thành 1 hàm mapToMatchDetailResponse duy nhất để code gọn hơn
     private MatchDetailResponse mapToMatchResponse(Match m) {
-        MatchDetailResponse res = new MatchDetailResponse();
-        res.setId(m.getId());
-        res.setHomeTeam(m.getHomeTeam().getName());
-        res.setHomeLogo(m.getHomeTeam().getLogoUrl());
-        res.setAwayTeam(m.getAwayTeam().getName());
-        res.setAwayLogo(m.getAwayTeam().getLogoUrl());
-        res.setMatchDate(m.getMatchDate());
-        res.setRoundName(m.getRoundName());
-        res.setStadium(m.getStadium()); // Nếu Entity có trường này
-        res.setHomeScore(m.getHomeScore());
-        res.setAwayScore(m.getAwayScore());
-        res.setStatus(m.getStatus().name());
-        return res;
+        return mapToMatchDetailResponse(m);
     }
 }

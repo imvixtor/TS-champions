@@ -2,17 +2,16 @@ package com.example.football_manager.modules.tournament.entity;
 
 import com.example.football_manager.common.baseEntity.BaseEntity;
 import com.example.football_manager.modules.team.entity.Team;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "tournament_teams")
 @Data
+@Builder
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class TournamentTeam extends BaseEntity {
 
     @ManyToOne
@@ -33,8 +32,14 @@ public class TournamentTeam extends BaseEntity {
     private Integer goalsFor = 0;
     private Integer goalsAgainst = 0;
 
-    private Integer yellowCards = 0; // Tổng thẻ vàng
-    private Integer redCards = 0;    // Tổng thẻ đỏ
+    @Column(name = "gd")
+    private Integer gd = 0;
+
+    private Integer yellowCards = 0;
+    private Integer redCards = 0;
+
+    @Column(name = "is_seeded")
+    private boolean isSeeded = false;
 
     public int getFairPlayScore() {
         return (yellowCards * 1) + (redCards * 3);

@@ -1,73 +1,111 @@
+// 1. TẤT CẢ IMPORT PHẢI NẰM Ở ĐẦU FILE
+import type { JSX } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider} from './modules/core/context/AuthProvider';
+
+// Context
+import { AuthProvider } from './modules/core/context/AuthProvider';
 import { useAuth } from './modules/core/context/useAuth';
+
+// Public Pages
 import { LoginPage } from './modules/auth/pages/LoginPage';
 import { HomePage } from './modules/public/pages/HomePage';
 import { StandingPage } from './modules/public/pages/StandingPage';
-// Import Admin
+
+// Admin Pages
 import { AdminLayout } from './modules/admin/layouts/AdminLayout';
-import { AdminMatchList } from './modules/admin/pages/AdminMatchList';
-import { MatchConsole } from './modules/admin/pages/MatchConsole';
-// Import Coach
+import { AdminMatchPage } from './modules/admin/pages/AdminMatchPage'; // Trang Quản lý danh sách
+import { MatchConsolePage } from './modules/admin/pages/MatchConsolePage'; // Trang Điều khiển trận đấu
+import { AdminTeamPage } from './modules/admin/pages/AdminTeamPage';
+import { AdminPlayerPage } from './modules/admin/pages/AdminPlayerPage';
+import { AdminTournamentPage } from './modules/admin/pages/AdminTournamentPage';
+import { AdminSchedulePage } from './modules/admin/pages/AdminSchedulePage'; // Trang Lên lịch thông minh
+
+// Coach Pages & Layouts
+import { CoachLayout } from './modules/coach/layouts/CoachLayout'; // 👈 Import Layout mới
 import { CoachMatchList } from './modules/coach/pages/CoachMatchList';
-import { CoachLineup } from './modules/coach/pages/CoachLineup';
+import { CoachLineupPage } from './modules/coach/pages/CoachLineupPage'; 
+import { CoachSquadPage } from './modules/coach/pages/CoachSquadPage';
 
-import { AdminTeamPage } from './modules/admin/pages/AdminTeamPage'
-import { AdminPlayerPage } from './modules/admin/pages/AdminPlayerPage'
 
-// Bảo vệ Route (Chặn người lạ vào trang Admin/Coach)
+// --- COMPONENT BẢO VỆ ROUTE ---
+// Chỉ cho phép user có đúng role truy cập, nếu không sẽ đá về Login hoặc Home
 const ProtectedRoute = ({ children, role }: { children: JSX.Element, role: string }) => {
     const { user } = useAuth();
-    // Nếu chưa đăng nhập hoặc sai quyền -> Đá về login hoặc trang chủ
-    if (!user) return <Navigate to="/login" />;
-    if (user.role !== role && role !== 'ANY') return <Navigate to="/" />;
+    
+    // 1. Chưa đăng nhập -> Về trang Login
+    if (!user) return <Navigate to="/login" replace />;
+    
+    // 2. Đã đăng nhập nhưng sai quyền
+    if (user.role !== role && role !== 'ANY') {
+        // Nếu là Coach cố vào Admin -> Về Coach Dashboard
+        if (user.role === 'COACH') return <Navigate to="/coach/matches" replace />;
+        // Nếu là Admin cố vào Coach -> Về Admin Dashboard
+        if (user.role === 'ADMIN') return <Navigate to="/admin/matches" replace />;
+        
+        return <Navigate to="/" replace />;
+    }
+    
     return children;
 };
 
+// --- APP CHÍNH ---
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* PUBLIC */}
+          {/* ================= PUBLIC ROUTES ================= */}
           <Route path="/" element={<HomePage />} />
           <Route path="/standings" element={<StandingPage />} />
           <Route path="/login" element={<LoginPage />} />
 
-          {/* ADMIN AREA */}
+          {/* ================= ADMIN ROUTES ================= */}
           <Route path="/admin" element={
             <ProtectedRoute role="ADMIN">
+                {/* AdminLayout sẽ chứa thanh bên (Sidebar) và Header */}
                 <AdminLayout />
             </ProtectedRoute>
           }>
-              <Route path="matches" element={<AdminMatchList />} />
-              <Route path="matches/:id/console" element={<MatchConsole />} />
+              {/* Redirect mặc định: Vào /admin tự nhảy sang /admin/matches */}
+              <Route index element={<Navigate to="matches" replace />} />
+              
+              {/* Quản lý Giải đấu */}
+              <Route path="tournaments" element={<AdminTournamentPage />} />
+              
+              {/* Quản lý Trận đấu & Lên lịch */}
+              <Route path="matches" element={<AdminMatchPage />} />
+              <Route path="schedule" element={<AdminSchedulePage />} /> {/* Trang lên lịch thông minh */}
+              
+              {/* Console điều khiển trận đấu */}
+              <Route path="match/:id/console" element={<MatchConsolePage />} />
+              
+              {/* Quản lý Đội bóng & Cầu thủ */}
               <Route path="teams" element={<AdminTeamPage />} />
               <Route path="players" element={<AdminPlayerPage />} />
-              <Route path="tournaments" element={<AdminTournamentPage />} />
-              <Route path="schedule" element={<AdminSchedulePage />} />
           </Route>
 
-          {/* COACH AREA */}
+          {/* ================= COACH ROUTES ================= */}
           <Route path="/coach" element={
              <ProtectedRoute role="COACH">
-                 {/* Coach không cần Layout phức tạp, bọc div đơn giản */}
-                 <div className="font-sans"><Outlet /></div>
+                 {/* 👇 Sử dụng Layout mới chuyên nghiệp cho HLV */}
+                 <CoachLayout />
              </ProtectedRoute>
           }>
+              {/* Redirect mặc định: Vào /coach tự nhảy sang /coach/matches */}
+              <Route index element={<Navigate to="matches" replace />} />
+
               <Route path="matches" element={<CoachMatchList />} />
-              <Route path="match/:id/lineup" element={<CoachLineup />} />
+              <Route path="match/:id/lineup" element={<CoachLineupPage />} />
+              <Route path="squad" element={<CoachSquadPage />} />
           </Route>
           
-          {/* Cần thêm import Outlet ở đầu file nếu dùng Layout lồng nhau cho Coach */}
+          {/* Route 404: Nhập linh tinh sẽ về Login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>
   );
 }
 
-import { Outlet } from 'react-router-dom'; // Nhớ dòng này
-import type { JSX } from 'react';
-import { AdminTournamentPage } from './modules/admin/pages/AdminTournamentPage';
-import { AdminSchedulePage } from './modules/admin/pages/AdminSchedulePage';
 export default App;

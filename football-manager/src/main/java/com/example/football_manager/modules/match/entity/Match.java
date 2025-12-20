@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -30,7 +31,6 @@ public class Match extends BaseEntity {
     @JoinColumn(name = "away_team_id")
     private Team awayTeam;
 
-    private LocalDateTime matchDate;
     private String roundName; // Vòng 1, Tứ kết...
     private String stadium;
 
@@ -38,5 +38,13 @@ public class Match extends BaseEntity {
     private Integer awayScore = 0;
 
     @Enumerated(EnumType.STRING)
-    private MatchStatus status;
+    private MatchStatus status = MatchStatus.SCHEDULED;
+
+    private String groupName;
+
+    @Column(name = "match_date")
+    private LocalDateTime matchDate;
+
+    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<MatchEvent> events;
 }

@@ -2,6 +2,7 @@ package com.example.football_manager.modules.auth.entity;
 
 import com.example.football_manager.common.baseEntity.BaseEntity;
 import com.example.football_manager.common.baseEntity.Enum.Role;
+import com.example.football_manager.modules.team.entity.Team;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,9 +29,13 @@ public class User extends BaseEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @OneToOne
+    @JoinColumn(name = "team_id")
+    private Team team;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities(){
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
     @Override

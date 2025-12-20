@@ -37,6 +37,8 @@ public class SecurityConfig {
                                 "/uploads/**",
                                 "/champions/tournament/**"
                         ).permitAll()
+                        .requestMatchers("/champions/admin/**").hasAnyAuthority("ADMIN")
+                        .requestMatchers("/champions/match/**").hasAnyAuthority("ADMIN", "COACH")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

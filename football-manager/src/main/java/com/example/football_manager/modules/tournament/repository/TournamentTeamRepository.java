@@ -15,4 +15,6 @@ public interface TournamentTeamRepository extends JpaRepository<TournamentTeam, 
     boolean existsByTournamentIdAndTeamId(Integer tournamentId, Integer teamId);
 
     Optional<TournamentTeam> findByTournamentIdAndTeamId(Integer tournamentId, Integer teamId);
+
+    void deleteByTeamId(Integer integer);
 }

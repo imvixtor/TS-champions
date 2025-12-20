@@ -21,4 +21,6 @@ public interface MatchEventRepository extends JpaRepository<MatchEvent, Integer>
             "GROUP BY p.id, p.name, t.name, p.avatarUrl " +
             "ORDER BY COUNT(e) DESC")
     List<TopScorerDTO> findTopScorers(@Param("tourId") Integer tourId);
+
+    List<MatchEvent> findByMatchIdOrderByMinuteAsc(Integer matchId);
 }

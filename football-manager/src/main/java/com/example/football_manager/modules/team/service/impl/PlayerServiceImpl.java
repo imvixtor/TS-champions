@@ -1,5 +1,6 @@
 package com.example.football_manager.modules.team.service.impl;
 
+import com.example.football_manager.modules.match.repository.MatchEventRepository;
 import com.example.football_manager.modules.team.dto.PlayerRequest;
 import com.example.football_manager.modules.team.dto.PlayerResponse;
 import com.example.football_manager.modules.team.entity.Player;
@@ -7,10 +8,12 @@ import com.example.football_manager.modules.team.entity.Team;
 import com.example.football_manager.modules.team.repository.PlayerRepository;
 import com.example.football_manager.modules.team.repository.TeamRepository;
 import com.example.football_manager.modules.team.service.PlayerService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
@@ -22,9 +25,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class PlayerServiceImpl implements PlayerService {
-    @Autowired private PlayerRepository playerRepository;
-    @Autowired private TeamRepository teamRepository;
+    private final PlayerRepository playerRepository;
+    private final TeamRepository teamRepository;
+    private final MatchEventRepository matchEventRepository;
 
     @Value("${application.file.upload-dir}")
     private String uploadDir;
@@ -61,8 +66,12 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public void delete(Integer id){
-        playerRepository.deleteById(id);
+    @Transactional // Quan trọng để xóa sạch
+    public void delete(Integer id) {
+        Player player = playerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy cầu thủ"));
+
+        playerRepository.delete(player);
     }
 
     public PlayerResponse updatePlayer(Integer id, PlayerRequest request, MultipartFile avatarFile){

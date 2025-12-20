@@ -1,5 +1,6 @@
 package com.example.football_manager.modules.tournament.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -14,6 +15,9 @@ public class StandingResponse {
     private Integer drawn;
     private Integer lost;
     private Integer gd; // Hiệu số (Goal Difference)
+
+    @JsonProperty("isSeeded")
+    private boolean isSeeded;
 
     private Integer yellowCards;
     private Integer redCards;

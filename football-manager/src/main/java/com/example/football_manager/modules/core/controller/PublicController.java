@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -19,21 +20,31 @@ public class PublicController {
     private final MatchService matchService;
     private final TournamentService tournamentService;
 
-    // 1. Lấy danh sách giải đấu (để khách chọn xem BXH giải nào)
     @GetMapping("/tournaments")
     public ResponseEntity<List<Tournament>> getTournaments() {
         return ResponseEntity.ok(tournamentService.findAll());
     }
 
-    // 2. Lấy BXH của 1 giải
     @GetMapping("/tournament/{id}/standings")
     public ResponseEntity<List<StandingResponse>> getStandings(@PathVariable Integer id) {
         return ResponseEntity.ok(tournamentService.getStandings(id));
     }
 
-    // 3. Lấy Lịch thi đấu trong tuần (Trang chủ)
     @GetMapping("/matches/weekly")
     public ResponseEntity<List<MatchDetailResponse>> getWeeklyMatches() {
         return ResponseEntity.ok(matchService.getPublicMatchesThisWeek());
+    }
+
+    @GetMapping("/match/{id}")
+    public ResponseEntity<MatchDetailResponse> getMatchDetail(@PathVariable Integer id) {
+        return ResponseEntity.ok(matchService.getMatchDetail(id));
+    }
+
+    @GetMapping("/matches/search")
+    public ResponseEntity<List<MatchDetailResponse>> searchMatches(
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Integer tournamentId
+    ) {
+        return ResponseEntity.ok(matchService.searchPublicMatches(date, tournamentId));
     }
 }

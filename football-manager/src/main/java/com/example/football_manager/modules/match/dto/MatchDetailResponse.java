@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -26,8 +27,12 @@ public class MatchDetailResponse {
     private String homeTeam; // Tên đội nhà
     private String homeLogo;
 
+    private String groupName;
+
     // Đội khách
     private Integer awayTeamId;
     private String awayTeam; // Tên đội khách
     private String awayLogo;
+
+    private List<MatchEventResponse> events;
 }

@@ -20,7 +20,7 @@ import java.util.List;
 public class TeamController {
     private final TeamService teamService;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'COACH')")
     @PostMapping(value = "/create", consumes = "multipart/form-data")
     public ResponseEntity<?> createTeam(@RequestPart("team") @Valid TeamRequest team,
                                         @Valid @RequestPart(value = "logo", required = false) MultipartFile logo){
@@ -28,13 +28,13 @@ public class TeamController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'COACH')")
     @GetMapping("/{id}")
     public ResponseEntity<TeamResponse> getById(@PathVariable Integer id){
         return ResponseEntity.ok(teamService.getTeam(id));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'COACH')")
     @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
     public ResponseEntity<?> updateTeam(
             @PathVariable Integer id,
@@ -45,7 +45,7 @@ public class TeamController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public  ResponseEntity<?> deleteTeam(@PathVariable Integer id){
         teamService.delete(id);
@@ -57,7 +57,7 @@ public class TeamController {
         return ResponseEntity.ok(teamService.findAll());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<List<TeamResponse>> searchTeams(@RequestParam String name) {
         return ResponseEntity.ok(teamService.searchByName(name));
