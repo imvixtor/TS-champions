@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axiosClient from '../../core/api/axiosClient';
+import { teamService, playerService } from '../../../services';
 
 const API_URL = 'http://localhost:8080';
 
@@ -32,8 +32,8 @@ export const AdminTeamPage = () => {
 
     const fetchTeams = async () => {
         try {
-            const res = await axiosClient.get('/champions/team');
-            setTeams(res.data);
+            const data = await teamService.getAllTeams();
+            setTeams(data);
         } catch (e) { console.error(e); }
     };
 
@@ -44,8 +44,8 @@ export const AdminTeamPage = () => {
         setShowPlayerModal(true);
         setTeamPlayers([]);
         try {
-            const res = await axiosClient.get(`/champions/player/by-team/${team.id}`);
-            setTeamPlayers(res.data);
+            const data = await playerService.getPlayersByTeam(team.id);
+            setTeamPlayers(data);
         } catch (error) {
             console.error("Lỗi tải cầu thủ:", error);
             alert("Không tải được danh sách cầu thủ.");
@@ -64,14 +64,10 @@ export const AdminTeamPage = () => {
             if (logo) formData.append('logo', logo);
 
             if (editingTeamId) {
-                await axiosClient.put(`/champions/team/update/${editingTeamId}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await teamService.updateTeam(editingTeamId, { name, shortName, stadium, coachName }, logo || undefined);
                 alert("✅ Cập nhật thành công!");
             } else {
-                await axiosClient.post('/champions/team/create', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await teamService.createTeam({ name, shortName, stadium, coachName }, logo || undefined);
                 alert("✅ Tạo đội mới thành công!");
             }
             handleCancelEdit();
@@ -87,7 +83,7 @@ export const AdminTeamPage = () => {
     const handleDelete = async (id: number) => {
         if (!confirm("⚠️ CẢNH BÁO: Xóa đội bóng sẽ XÓA LUÔN tất cả cầu thủ thuộc đội đó.\nBạn có chắc chắn không?")) return;
         try {
-            await axiosClient.delete(`/champions/team/delete/${id}`);
+            await teamService.deleteTeam(id);
             alert("🗑️ Đã xóa đội bóng!");
             fetchTeams();
             if (editingTeamId === id) handleCancelEdit();
@@ -127,7 +123,7 @@ export const AdminTeamPage = () => {
         if (!coachUsername || !coachPassword) return alert("Vui lòng nhập Username và Password!");
         
         try {
-            await axiosClient.post('/champions/admin/create-coach', {
+            await teamService.createCoach({
                 username: coachUsername,
                 password: coachPassword,
                 teamId: selectedTeamForCoach.id

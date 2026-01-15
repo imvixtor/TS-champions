@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosClient from '../../core/api/axiosClient';
+import { matchService, tournamentService, playerService } from '../../../services';
 
 const API_URL = 'http://localhost:8080';
 
@@ -45,9 +45,9 @@ export const AdminMatchPage = () => {
     const [loadingPlayers, setLoadingPlayers] = useState(false);
 
     useEffect(() => {
-        axiosClient.get('/champions/tournament').then(res => {
-            setTournaments(res.data);
-            if (res.data.length > 0) setSelectedTourId(res.data[0].id);
+        tournamentService.getAllTournaments().then(data => {
+            setTournaments(data);
+            if (data.length > 0) setSelectedTourId(data[0].id);
         });
     }, []);
 
@@ -59,18 +59,15 @@ export const AdminMatchPage = () => {
         if (!selectedTourId) return;
         setLoading(true);
         try {
-            const url = filterGroup 
-                ? `/champions/match/by-tournament/${selectedTourId}?groupName=${filterGroup}`
-                : `/champions/match/by-tournament/${selectedTourId}`;
-            const res = await axiosClient.get(url);
-            setMatches(res.data);
+            const data = await matchService.getMatchesByTournament(selectedTourId, filterGroup || undefined);
+            setMatches(data);
         } catch (e) { console.error(e); } finally { setLoading(false); }
     };
 
     const handleGenerateSchedule = async () => {
         if (!selectedTourId || !confirm("Sinh lịch thi đấu tự động?")) return;
         try {
-            await axiosClient.post(`/champions/match/generate-schedule/${selectedTourId}`);
+            await matchService.generateSchedule(selectedTourId);
             alert("✅ Đã sinh lịch thành công!");
             fetchMatches();
         } catch (error) { console.error(error); alert("❌ Lỗi sinh lịch!"); }
@@ -79,7 +76,7 @@ export const AdminMatchPage = () => {
     const handleSaveUpdate = async () => {
         if (!editingMatch) return;
         try {
-            await axiosClient.put(`/champions/match/${editingMatch.id}/update`, {
+            await matchService.updateMatch(editingMatch.id, {
                 matchDate: editForm.matchDate,
                 stadium: editForm.stadium,
                 status: editingMatch.status
@@ -99,8 +96,8 @@ export const AdminMatchPage = () => {
         setTeamPlayers([]); // Clear dữ liệu cũ
         
         try {
-            const res = await axiosClient.get(`/champions/player/by-team/${teamId}`);
-            setTeamPlayers(res.data);
+            const data = await playerService.getPlayersByTeam(teamId);
+            setTeamPlayers(data);
         } catch (error) {
             console.error(error);
             alert("❌ Không thể tải danh sách cầu thủ.");

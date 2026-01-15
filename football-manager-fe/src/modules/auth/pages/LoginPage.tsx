@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import axiosClient from '../../core/api/axiosClient';
+import { authService } from '../../../services/auth.service';
 import { useAuth } from '../../../hooks/useAuth';
 
 // Interface cho Token đã giải mã
@@ -29,8 +29,8 @@ export const LoginPage = () => {
 
         try {
             // 1. Gọi API đăng nhập
-            const res = await axiosClient.post('/champions/auth/login', { username, password });
-            const token = res.data.jwtToken; 
+            const res = await authService.login({ username, password });
+            const token = res.jwtToken; 
 
             if (!token) throw new Error("Không nhận được token từ server!");
 

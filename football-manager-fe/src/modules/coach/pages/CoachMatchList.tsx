@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosClient from '../../core/api/axiosClient';
+import { matchService } from '../../../services/match.service';
 import { useAuth } from '../../../hooks/useAuth';
 
 export const CoachMatchList = () => {
@@ -19,8 +19,8 @@ export const CoachMatchList = () => {
         // --- SỬA 2: Chỉ gọi API khi có teamId ---
         if (myTeamId) {
             setLoading(true);
-            axiosClient.get(`/champions/match/by-team/${myTeamId}`)
-                .then(res => setMatches(res.data))
+            matchService.getMatchesByTeam(myTeamId)
+                .then(data => setMatches(data))
                 .catch(err => {
                     console.error(err);
                     // Có thể set error state ở đây nếu API lỗi

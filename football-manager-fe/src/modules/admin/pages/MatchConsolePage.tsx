@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axiosClient from '../../core/api/axiosClient';
+import { matchService, playerService } from '../../../services';
 
 const API_URL = 'http://localhost:8080';
 
@@ -38,17 +38,17 @@ export const MatchConsolePage = () => {
         const fetchData = async () => {
             try {
                 // Lấy chi tiết trận đấu
-                const matchRes = await axiosClient.get(`/champions/match/${id}`);
-                setMatch(matchRes.data);
+                const matchData = await matchService.getMatchDetail(Number(id));
+                setMatch(matchData);
 
                 // Lấy danh sách cầu thủ 2 đội
-                const [homeRes, awayRes] = await Promise.all([
-                    axiosClient.get(`/champions/player/by-team/${matchRes.data.homeTeamId}`),
-                    axiosClient.get(`/champions/player/by-team/${matchRes.data.awayTeamId}`)
+                const [homeData, awayData] = await Promise.all([
+                    playerService.getPlayersByTeam(matchData.homeTeamId),
+                    playerService.getPlayersByTeam(matchData.awayTeamId)
                 ]);
                 
-                setHomePlayers(homeRes.data);
-                setAwayPlayers(awayRes.data);
+                setHomePlayers(homeData);
+                setAwayPlayers(awayData);
                 setLoading(false);
             } catch (error) {
                 console.error(error);
@@ -85,7 +85,7 @@ export const MatchConsolePage = () => {
     const handleStartMatch = async () => {
         if(!confirm("Bắt đầu trận đấu? Trạng thái sẽ chuyển sang LIVE.")) return;
         try {
-            await axiosClient.post(`/champions/match/${id}/start`);
+            await matchService.startMatch(Number(id));
             setMatch({...match, status: 'IN_PROGRESS'});
             alert("▶ Trận đấu đã bắt đầu!");
         } catch (e) { alert("Lỗi bắt đầu trận đấu."); }
@@ -95,7 +95,7 @@ export const MatchConsolePage = () => {
     const handleFinishMatch = async () => {
         if(!confirm("⚠️ XÁC NHẬN KẾT THÚC TRẬN ĐẤU?\nKết quả sẽ được lưu và cập nhật BXH.")) return;
         try {
-            await axiosClient.post(`/champions/match/${id}/finish`);
+            await matchService.finishMatch(Number(id));
             setMatch({...match, status: 'FINISHED'});
             alert("🏁 Trận đấu đã kết thúc!");
             navigate('/admin/matches');
@@ -117,11 +117,11 @@ export const MatchConsolePage = () => {
 
         try {
             // 👇 SỬA LẠI ĐÚNG API CŨ: /champions/match/events
-            await axiosClient.post('/champions/match/events', {
+            await matchService.addMatchEvent({
                 matchId: match.id,
-                teamId: subTeamId,
+                teamId: subTeamId!,
                 playerId: playerIn.id, // Người VÀO sân
-                type: 'SUBSTITUTION',
+                eventType: 'SUBSTITUTION' as any,
                 minute: Number(actionMinute)
             });
 
@@ -155,11 +155,11 @@ export const MatchConsolePage = () => {
 
         try {
             // 👇 SỬA LẠI ĐÚNG API CŨ: /champions/match/events
-            await axiosClient.post('/champions/match/events', {
+            await matchService.addMatchEvent({
                 matchId: match.id,
-                type: type,
                 teamId: teamId,
                 playerId: player.id,
+                eventType: type as 'GOAL' | 'YELLOW_CARD' | 'RED_CARD',
                 minute: Number(minute)
             });
 

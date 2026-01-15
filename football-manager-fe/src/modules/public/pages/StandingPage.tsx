@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axiosClient from '../../core/api/axiosClient';
+import { publicService } from '../../../services/public.service';
 import { Navbar } from '../components/Navbar';
 
 const API_URL = 'http://localhost:8080';
@@ -41,11 +41,11 @@ export const StandingPage = () => {
 
     // 1. Tải danh sách giải đấu
     useEffect(() => {
-        axiosClient.get('/champions/public/tournaments')
-            .then(res => {
-                setTournaments(res.data);
+        publicService.getTournaments()
+            .then(data => {
+                setTournaments(data);
                 // Chọn giải đấu đầu tiên làm mặc định
-                if (res.data.length > 0) setSelectedTourId(res.data[0].id);
+                if (data.length > 0) setSelectedTourId(data[0].id);
             })
             .catch(err => console.error("Lỗi tải giải đấu:", err));
     }, []);
@@ -57,9 +57,8 @@ export const StandingPage = () => {
         const fetchStandings = async () => {
             setLoading(true);
             try {
-                // Gọi API lấy BXH (Lưu ý: API này trả về list phẳng tất cả các đội)
-                const res = await axiosClient.get(`/champions/public/tournament/${selectedTourId}/standings`);
-                setStandings(res.data);
+                const data = await publicService.getStandings(selectedTourId);
+                setStandings(data);
             } catch (err) {
                 console.error("Lỗi tải BXH:", err);
                 setStandings([]);

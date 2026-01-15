@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axiosClient from '../../core/api/axiosClient';
+import { playerService, teamService } from '../../../services';
 
 const API_URL = 'http://localhost:8080';
 
@@ -18,11 +18,11 @@ export const AdminPlayerPage = () => {
 
     // 1. Load danh sách Đội bóng (để bỏ vào Dropdown)
     useEffect(() => {
-        axiosClient.get('/champions/team')
-            .then(res => {
-                setTeams(res.data);
-                if (res.data.length > 0) {
-                    setSelectedTeamId(res.data[0].id); // Mặc định chọn đội đầu tiên
+        teamService.getAllTeams()
+            .then(data => {
+                setTeams(data);
+                if (data.length > 0) {
+                    setSelectedTeamId(data[0].id); // Mặc định chọn đội đầu tiên
                 }
             })
             .catch(err => console.error("Lỗi tải đội:", err));
@@ -37,8 +37,8 @@ export const AdminPlayerPage = () => {
 
     const fetchPlayers = async (teamId: string) => {
         try {
-            const res = await axiosClient.get(`/champions/player/by-team/${teamId}`);
-            setPlayers(res.data);
+            const data = await playerService.getPlayersByTeam(Number(teamId));
+            setPlayers(data);
         } catch (error) {
             console.error("Lỗi tải cầu thủ:", error);
             setPlayers([]); // Nếu lỗi thì reset list
@@ -69,9 +69,12 @@ export const AdminPlayerPage = () => {
                 formData.append('avatar', avatar);
             }
 
-            await axiosClient.post('/champions/player/create', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            await playerService.createPlayer({
+                name,
+                shirtNumber: Number(shirtNumber),
+                position,
+                teamId: Number(selectedTeamId)
+            }, avatar || undefined);
 
             alert("✅ Thêm cầu thủ thành công!");
             setName(''); setShirtNumber(''); setAvatar(null); // Reset form
@@ -91,7 +94,7 @@ export const AdminPlayerPage = () => {
         if(!confirm("Bạn có chắc chắn muốn xóa cầu thủ này?")) return;
         
         try {
-            await axiosClient.delete(`/champions/player/delete/${playerId}`);
+            await playerService.deletePlayer(playerId);
             alert("🗑️ Đã xóa thành công!");
             fetchPlayers(selectedTeamId); // Load lại list
         } catch (error) {

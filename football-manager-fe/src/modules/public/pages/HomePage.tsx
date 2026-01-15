@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axiosClient from '../../core/api/axiosClient';
+import { publicService } from '../../../services/public.service';
 import { Navbar } from '../components/Navbar';
 import { MatchCard } from '../components/MatchCard';
 import { MatchDetailModal } from '../components/MatchDetailModal';
@@ -21,8 +21,8 @@ export const HomePage = () => {
 
     // 1. Load danh sách giải đấu (cho Dropdown)
     useEffect(() => {
-        axiosClient.get('/champions/public/tournaments')
-            .then(res => setTournaments(res.data))
+        publicService.getTournaments()
+            .then(data => setTournaments(data))
             .catch(e => console.error(e));
     }, []);
 
@@ -31,14 +31,11 @@ export const HomePage = () => {
         const fetchMatches = async () => {
             setLoading(true);
             try {
-                // Gọi API Search mới
-                const res = await axiosClient.get('/champions/public/matches/search', {
-                    params: {
-                        date: filterDate,
-                        tournamentId: filterTourId || null // Nếu rỗng thì gửi null
-                    }
+                const data = await publicService.searchMatches({
+                    date: filterDate,
+                    tournamentId: filterTourId || null
                 });
-                setMatches(res.data);
+                setMatches(data);
             } catch (err) {
                 console.error("Lỗi tải lịch:", err);
                 setMatches([]);

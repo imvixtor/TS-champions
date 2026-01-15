@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axiosClient from '../../core/api/axiosClient';
+import { playerService } from '../../../services/player.service';
 import { useAuth } from '../../../hooks/useAuth';
 
 const API_URL = 'http://localhost:8080';
@@ -14,8 +14,8 @@ export const CoachSquadPage = () => {
 
     useEffect(() => {
         if (myTeamId) {
-            axiosClient.get(`/champions/player/by-team/${myTeamId}`)
-                .then(res => setPlayers(res.data))
+            playerService.getPlayersByTeam(myTeamId)
+                .then(data => setPlayers(data))
                 .catch(err => console.error("Lỗi tải cầu thủ:", err))
                 .finally(() => setLoading(false));
         }

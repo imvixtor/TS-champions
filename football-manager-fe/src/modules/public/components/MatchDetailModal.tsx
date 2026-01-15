@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axiosClient from '../../core/api/axiosClient';
+import { publicService } from '../../../services/public.service';
 
 const API_URL = 'http://localhost:8080';
 
@@ -33,8 +33,8 @@ export const MatchDetailModal = ({ matchId, onClose }: MatchDetailProps) => {
 
     useEffect(() => {
         // Gọi API public để lấy chi tiết trận đấu + events
-        axiosClient.get(`/champions/public/match/${matchId}`) // Hoặc /match/${id} nếu bạn chưa tách public
-            .then(res => setMatch(res.data))
+        publicService.getMatchDetail(matchId)
+            .then(data => setMatch(data))
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
     }, [matchId]);

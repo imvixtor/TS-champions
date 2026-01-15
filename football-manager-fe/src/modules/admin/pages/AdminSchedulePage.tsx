@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import axiosClient from '../../core/api/axiosClient';
+import { publicService, teamService, matchService } from '../../../services';
 
 // Helper: Xử lý ảnh (để hiển thị Logo)
 const API_URL = 'http://localhost:8080';
@@ -29,12 +29,12 @@ export const AdminSchedulePage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [resTour, resTeam] = await Promise.all([
-                    axiosClient.get('/champions/public/tournaments'),
-                    axiosClient.get('/champions/team')
+                const [tourData, teamData] = await Promise.all([
+                    publicService.getTournaments(),
+                    teamService.getAllTeams()
                 ]);
-                setTournaments(resTour.data);
-                setTeams(resTeam.data);
+                setTournaments(tourData);
+                setTeams(teamData);
             } catch (error) {
                 console.error("Lỗi tải dữ liệu:", error);
             }
@@ -85,7 +85,7 @@ export const AdminSchedulePage = () => {
                 roundName
             };
 
-            await axiosClient.post('/champions/match/create', payload);
+            await matchService.createMatch(payload);
             alert("✅ Lên lịch trận đấu thành công!");
             
             // Reset form thông minh (Giữ lại giải đấu và vòng để nhập tiếp cho nhanh)

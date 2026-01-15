@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import axiosClient from '../../core/api/axiosClient';
+import { playerService } from '../../../services/player.service';
 import { useAuth } from '../../../hooks/useAuth';
 
 const API_URL = 'http://localhost:8080';
@@ -27,8 +27,8 @@ export const CoachLineupPage = () => {
     useEffect(() => {
         if (teamId) {
             setLoading(true);
-            axiosClient.get(`/champions/player/by-team/${teamId}`)
-                .then(res => setAllPlayers(res.data))
+            playerService.getPlayersByTeam(teamId)
+                .then(data => setAllPlayers(data))
                 .catch(err => console.error(err))
                 .finally(() => setLoading(false));
         }

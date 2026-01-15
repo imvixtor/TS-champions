@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axiosClient from '../../core/api/axiosClient';
+import { tournamentService, teamService } from '../../../services';
 
 const API_URL = 'http://localhost:8080';
 
@@ -74,22 +74,22 @@ export const AdminTournamentPage = () => {
 
     const fetchTournaments = async () => {
         try {
-            const res = await axiosClient.get('/champions/tournament');
-            setTournaments(res.data);
+            const data = await tournamentService.getAllTournaments();
+            setTournaments(data);
         } catch (e) { console.error("Lỗi tải giải đấu", e); }
     };
 
     const fetchAllTeams = async () => {
         try {
-            const res = await axiosClient.get('/champions/team');
-            setAllTeams(res.data);
+            const data = await teamService.getAllTeams();
+            setAllTeams(data);
         } catch (e) { console.error("Lỗi tải đội bóng", e); }
     };
 
     const fetchStandings = async (tourId: number) => {
         try {
-            const res = await axiosClient.get(`/champions/tournament/${tourId}/standings`);
-            setStandings(res.data);
+            const data = await tournamentService.getStandings(tourId);
+            setStandings(data);
         } catch (error) {
             console.error("Lỗi tải bảng xếp hạng", error);
             setStandings([]); 
@@ -105,12 +105,12 @@ export const AdminTournamentPage = () => {
         try {
             if (editingId) {
                 // --- LOGIC CẬP NHẬT ---
-                await axiosClient.put(`/champions/tournament/update/${editingId}`, form);
+                await tournamentService.updateTournament(editingId, form);
                 alert("✅ Cập nhật giải đấu thành công!");
                 handleCancelEdit(); // Reset form
             } else {
                 // --- LOGIC TẠO MỚI ---
-                await axiosClient.post('/champions/tournament/create', form);
+                await tournamentService.createTournament(form);
                 alert("✅ Tạo giải đấu thành công!");
                 setForm({ name: '', season: '', startDate: '', endDate: '' });
             }
@@ -149,7 +149,7 @@ export const AdminTournamentPage = () => {
         if (!confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa giải đấu này?\nTất cả dữ liệu bảng đấu, lịch thi đấu liên quan sẽ bị mất vĩnh viễn!")) return;
 
         try {
-            await axiosClient.delete(`/champions/tournament/delete/${id}`);
+            await tournamentService.deleteTournament(id);
             alert("🗑️ Đã xóa giải đấu!");
             fetchTournaments();
             if (editingId === id) handleCancelEdit(); // Nếu đang sửa giải bị xóa thì reset form
@@ -180,7 +180,7 @@ export const AdminTournamentPage = () => {
     const handleAddTeams = async () => {
         if (!selectedTournament || selectedTeamIds.length === 0) return alert("Chưa chọn đội nào!");
         try {
-            await axiosClient.post(`/champions/tournament/${selectedTournament.id}/add-teams`, {
+            await tournamentService.addTeams(selectedTournament.id, {
                 teamIds: selectedTeamIds
             });
             alert(`✅ Đã thêm ${selectedTeamIds.length} đội vào giải!`);
@@ -196,9 +196,7 @@ export const AdminTournamentPage = () => {
     const handleToggleSeed = async (teamId: number) => {
         if (!selectedTournament) return;
         try {
-            await axiosClient.post(`/champions/tournament/${selectedTournament.id}/toggle-seed`, null, {
-                params: { teamId }
-            });
+            await tournamentService.toggleSeed(selectedTournament.id, teamId);
             fetchStandings(selectedTournament.id); 
         } catch (error) {
             console.error(error);
@@ -213,9 +211,7 @@ export const AdminTournamentPage = () => {
         if (!confirm(`Bạn có chắc muốn chia bảng?\n- Số bảng: ${groupCount}\n- Số hạt giống: ${seedCount}\n⚠️ Dữ liệu bảng cũ sẽ bị RESET.`)) return;
 
         try {
-            await axiosClient.post(`/champions/tournament/${selectedTournament.id}/draw`, null, {
-                params: { groups: groupCount }
-            });
+            await tournamentService.autoDraw(selectedTournament.id);
             alert("✅ Đã chia bảng thành công!");
             fetchStandings(selectedTournament.id);
         } catch (error) {
@@ -228,9 +224,11 @@ export const AdminTournamentPage = () => {
     const handleManualDraw = async () => {
         if (!selectedTournament || !manualTeamId) return alert("Vui lòng chọn đội bóng!");
         try {
-            await axiosClient.post(`/champions/tournament/${selectedTournament.id}/manual-draw`, {
-                teamId: Number(manualTeamId),
-                groupName: manualGroupName
+            await tournamentService.manualDraw(selectedTournament.id, {
+                groups: [{
+                    groupName: manualGroupName,
+                    teamIds: [Number(manualTeamId)]
+                }]
             });
             alert(`✅ Đã chuyển đội sang ${manualGroupName}`);
             fetchStandings(selectedTournament.id);
