@@ -12,7 +12,7 @@ import { HomePage } from './modules/public/pages/HomePage';
 import { StandingPage } from './modules/public/pages/StandingPage';
 
 // Admin Pages
-import { AdminLayout } from './modules/admin/layouts/AdminLayout';
+import { AdminLayout } from './components/layout/AdminLayout';
 import { AdminMatchPage } from './modules/admin/pages/AdminMatchPage'; // Trang Quản lý danh sách
 import { MatchConsolePage } from './modules/admin/pages/MatchConsolePage'; // Trang Điều khiển trận đấu
 import { AdminTeamPage } from './modules/admin/pages/AdminTeamPage';
@@ -21,7 +21,7 @@ import { AdminTournamentPage } from './modules/admin/pages/AdminTournamentPage';
 import { AdminSchedulePage } from './modules/admin/pages/AdminSchedulePage'; // Trang Lên lịch thông minh
 
 // Coach Pages & Layouts
-import { CoachLayout } from './modules/coach/layouts/CoachLayout'; // 👈 Import Layout mới
+import { CoachLayout } from './components/layout/CoachLayout';
 import { CoachMatchList } from './modules/coach/pages/CoachMatchList';
 import { CoachLineupPage } from './modules/coach/pages/CoachLineupPage'; 
 import { CoachSquadPage } from './modules/coach/pages/CoachSquadPage';

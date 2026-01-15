@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { publicService } from '../../../services/public.service';
-import { Navbar } from '../components/Navbar';
+import { Navbar } from '../../../components/common/Navbar';
 
 const API_URL = 'http://localhost:8080';
 

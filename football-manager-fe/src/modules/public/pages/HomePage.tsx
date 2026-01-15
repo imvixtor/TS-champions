@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { publicService } from '../../../services/public.service';
-import { Navbar } from '../components/Navbar';
-import { MatchCard } from '../components/MatchCard';
-import { MatchDetailModal } from '../components/MatchDetailModal';
+import { Navbar } from '../../../components/common/Navbar';
+import { MatchCard, MatchDetailModal } from '../../../components/features/match';
 
 // Helper: Lấy ngày hôm nay định dạng YYYY-MM-DD
 const getTodayString = () => new Date().toISOString().split('T')[0];
