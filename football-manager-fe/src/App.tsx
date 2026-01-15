@@ -3,8 +3,8 @@ import type { JSX } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Context
-import { AuthProvider } from './modules/core/context/AuthProvider';
-import { useAuth } from './modules/core/context/useAuth';
+import { AuthProvider } from './contexts/AuthProvider';
+import { useAuth } from './hooks/useAuth';
 
 // Public Pages
 import { LoginPage } from './modules/auth/pages/LoginPage';

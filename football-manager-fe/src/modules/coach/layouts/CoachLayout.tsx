@@ -1,5 +1,5 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../core/context/useAuth';
+import { useAuth } from '../../../hooks/useAuth';
 
 export const CoachLayout = () => {
     const { logout, user } = useAuth();

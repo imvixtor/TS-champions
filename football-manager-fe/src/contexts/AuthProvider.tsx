@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { getInitialUser, type User } from "./auth.utils";
+import { getInitialUser, type User } from "../utils/auth.utils";
 import { AuthContext } from "./AuthContext";
 
 export interface AuthContextType {

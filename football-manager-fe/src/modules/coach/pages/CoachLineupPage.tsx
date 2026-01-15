@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axiosClient from '../../core/api/axiosClient';
-import { useAuth } from '../../core/context/useAuth';
+import { useAuth } from '../../../hooks/useAuth';
 
 const API_URL = 'http://localhost:8080';
 
