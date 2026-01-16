@@ -1,7 +1,5 @@
 import axiosClient from './api/client';
-import type { Tournament } from '../types/tournament.types';
-import type { Match, SearchMatchesParams } from '../types/match.types';
-import type { StandingWithGroup } from '../types/standing.types';
+import type { Tournament, Match, SearchMatchesParams, StandingWithGroup } from '../types';
 
 export type { Tournament, Match, SearchMatchesParams };
 export type { StandingWithGroup as Standing };

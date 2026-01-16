@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { publicService } from '../../services/public.service';
-import { Navbar } from '../../components/common/Navbar';
-import type { TournamentBasic } from '../../types/tournament.types';
-import type { StandingWithGroup } from '../../types/standing.types';
+import { publicService } from '../../services';
+import { Navbar } from '../../components';
+import type { TournamentBasic, StandingWithGroup } from '../../types';
 
 const API_URL = 'http://localhost:8080';
 

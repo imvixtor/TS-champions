@@ -1,5 +1,5 @@
 import axiosClient from './api/client';
-import type { Player, CreatePlayerRequest } from '../types/player.types';
+import type { Player, CreatePlayerRequest } from '../types';
 
 export type { Player, CreatePlayerRequest };
 

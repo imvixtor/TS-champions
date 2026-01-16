@@ -1,5 +1,5 @@
 import axiosClient from './api/client';
-import type { LoginRequest, LoginResponse } from '../types/auth.types';
+import type { LoginRequest, LoginResponse } from '../types';
 
 export type { LoginRequest, LoginResponse };
 

@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import type { ProtectedRouteProps } from '../types/common.types';
+import { useAuth } from '../hooks';
+import type { ProtectedRouteProps } from '../types';
 
 export const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
     const { user } = useAuth();

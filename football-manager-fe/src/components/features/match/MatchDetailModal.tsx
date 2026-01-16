@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { publicService } from '../../../services/public.service';
-import type { MatchDetailProps, MatchWithEvents, MatchEvent } from '../../../types/match.types';
+import { publicService } from '../../../services';
+import type { MatchDetailProps, MatchWithEvents, MatchEvent } from '../../../types';
 
 const API_URL = 'http://localhost:8080';
 

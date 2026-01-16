@@ -5,8 +5,8 @@ import type {
     UpdateTournamentRequest,
     AddTeamsRequest,
     ManualDrawRequest,
-} from '../types/tournament.types';
-import type { TournamentStanding } from '../types/standing.types';
+    TournamentStanding,
+} from '../types';
 
 export type {
     Tournament,

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { matchService, tournamentService, playerService } from '../../services';
-import type { TournamentBasic } from '../../types/tournament.types';
-import type { Match } from '../../types/match.types';
+import type { TournamentBasic, Match } from '../../types';
 
 const API_URL = 'http://localhost:8080';
 

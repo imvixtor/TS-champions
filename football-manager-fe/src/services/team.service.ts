@@ -4,7 +4,7 @@ import type {
     CreateTeamRequest,
     UpdateTeamRequest,
     CreateCoachRequest,
-} from '../types/team.types';
+} from '../types';
 
 export type { Team, CreateTeamRequest, UpdateTeamRequest, CreateCoachRequest };
 

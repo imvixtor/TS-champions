@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { authService } from '../../services/auth.service';
-import { useAuth } from '../../hooks/useAuth';
-import type { DecodedToken } from '../../types/auth.types';
+import { authService } from '../../services';
+import { useAuth } from '../../hooks';
+import type { DecodedToken } from '../../types';
 
 export const LoginPage = () => {
     const [username, setUsername] = useState('');

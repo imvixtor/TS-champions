@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { playerService, teamService } from '../../services';
-import type { Team } from '../../types/team.types';
-import type { Player } from '../../types/player.types';
+import type { Team, Player } from '../../types';
 
 const API_URL = 'http://localhost:8080';
 

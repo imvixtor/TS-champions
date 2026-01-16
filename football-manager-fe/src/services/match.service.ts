@@ -4,7 +4,7 @@ import type {
     CreateMatchRequest,
     UpdateMatchRequest,
     MatchEventDTO,
-} from '../types/match.types';
+} from '../types';
 
 export type { Match, CreateMatchRequest, UpdateMatchRequest, MatchEventDTO };
 

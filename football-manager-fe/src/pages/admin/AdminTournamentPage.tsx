@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { tournamentService, teamService } from '../../services';
-import type { TeamBasic } from '../../types/team.types';
-import type { Tournament } from '../../types/tournament.types';
-import type { TournamentStanding } from '../../types/standing.types';
+import type { TeamBasic, Tournament, TournamentStanding } from '../../types';
 
 const API_URL = 'http://localhost:8080';
 
