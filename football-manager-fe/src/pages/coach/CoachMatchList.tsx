@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { matchService } from '../../../services/match.service';
-import { useAuth } from '../../../hooks/useAuth';
+import { matchService } from '../../services/match.service';
+import { useAuth } from '../../hooks/useAuth';
 
 export const CoachMatchList = () => {
     const { user } = useAuth();

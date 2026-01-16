@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { teamService, playerService } from '../../../services';
+import { teamService, playerService } from '../../services';
 
 const API_URL = 'http://localhost:8080';
 

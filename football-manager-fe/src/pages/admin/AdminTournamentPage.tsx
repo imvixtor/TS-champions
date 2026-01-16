@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { tournamentService, teamService } from '../../../services';
+import { tournamentService, teamService } from '../../services';
 
 const API_URL = 'http://localhost:8080';
 

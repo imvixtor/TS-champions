@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { publicService, teamService, matchService } from '../../../services';
+import { publicService, teamService, matchService } from '../../services';
 
 // Helper: Xử lý ảnh (để hiển thị Logo)
 const API_URL = 'http://localhost:8080';

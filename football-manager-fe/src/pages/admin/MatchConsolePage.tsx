@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { matchService, playerService } from '../../../services';
+import { matchService, playerService } from '../../services';
 
 const API_URL = 'http://localhost:8080';
 

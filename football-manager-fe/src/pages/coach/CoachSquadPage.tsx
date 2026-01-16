@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { playerService } from '../../../services/player.service';
-import { useAuth } from '../../../hooks/useAuth';
+import { playerService } from '../../services/player.service';
+import { useAuth } from '../../hooks/useAuth';
 
 const API_URL = 'http://localhost:8080';
 

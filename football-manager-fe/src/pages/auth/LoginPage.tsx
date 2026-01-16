@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { authService } from '../../../services/auth.service';
-import { useAuth } from '../../../hooks/useAuth';
+import { authService } from '../../services/auth.service';
+import { useAuth } from '../../hooks/useAuth';
 
 // Interface cho Token đã giải mã
 interface DecodedToken {
