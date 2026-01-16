@@ -1,20 +1,7 @@
 import axiosClient from './api/client';
+import type { Player, CreatePlayerRequest } from '../types/player.types';
 
-export interface Player {
-    id: number;
-    name: string;
-    shirtNumber: number;
-    position: string;
-    avatar: string;
-    teamId: number;
-}
-
-export interface CreatePlayerRequest {
-    name: string;
-    shirtNumber: number;
-    position: string;
-    teamId: number;
-}
+export type { Player, CreatePlayerRequest };
 
 export const playerService = {
     /**

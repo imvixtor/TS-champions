@@ -1,48 +1,10 @@
 import axiosClient from './api/client';
+import type { Tournament } from '../types/tournament.types';
+import type { Match, SearchMatchesParams } from '../types/match.types';
+import type { StandingWithGroup } from '../types/standing.types';
 
-export interface Tournament {
-    id: number;
-    name: string;
-    season: string;
-    startDate: string;
-    endDate: string;
-}
-
-export interface Match {
-    id: number;
-    homeTeamId: number;
-    homeTeam: string;
-    homeLogo: string;
-    awayTeamId: number;
-    awayTeam: string;
-    awayLogo: string;
-    matchDate: string;
-    roundName: string;
-    groupName: string;
-    stadium: string;
-    homeScore: number;
-    awayScore: number;
-    status: 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED';
-}
-
-export interface Standing {
-    teamId: number;
-    teamName: string;
-    teamLogo: string;
-    played: number;
-    won: number;
-    drawn: number;
-    lost: number;
-    goalsFor: number;
-    goalsAgainst: number;
-    goalDifference: number;
-    points: number;
-}
-
-export interface SearchMatchesParams {
-    date?: string;
-    tournamentId?: number | null;
-}
+export type { Tournament, Match, SearchMatchesParams };
+export type { StandingWithGroup as Standing };
 
 export const publicService = {
     /**
@@ -85,8 +47,8 @@ export const publicService = {
     /**
      * Lấy bảng xếp hạng (public)
      */
-    getStandings: async (tournamentId: number): Promise<Standing[]> => {
-        const response = await axiosClient.get<Standing[]>(`/champions/public/tournament/${tournamentId}/standings`);
+    getStandings: async (tournamentId: number): Promise<StandingWithGroup[]> => {
+        const response = await axiosClient.get<StandingWithGroup[]>(`/champions/public/tournament/${tournamentId}/standings`);
         return response.data;
     },
 };

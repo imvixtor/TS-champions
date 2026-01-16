@@ -1,33 +1,12 @@
 import axiosClient from './api/client';
+import type {
+    Team,
+    CreateTeamRequest,
+    UpdateTeamRequest,
+    CreateCoachRequest,
+} from '../types/team.types';
 
-export interface Team {
-    id: number;
-    name: string;
-    shortName: string;
-    stadium: string;
-    logo: string;
-    coachName?: string;
-}
-
-export interface CreateTeamRequest {
-    name: string;
-    shortName: string;
-    stadium: string;
-    coachName?: string;
-}
-
-export interface UpdateTeamRequest {
-    name: string;
-    shortName: string;
-    stadium: string;
-    coachName?: string;
-}
-
-export interface CreateCoachRequest {
-    teamId: number;
-    username: string;
-    password: string;
-}
+export type { Team, CreateTeamRequest, UpdateTeamRequest, CreateCoachRequest };
 
 export const teamService = {
     /**

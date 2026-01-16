@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { matchService, tournamentService, playerService } from '../../services';
+import type { TournamentBasic } from '../../types/tournament.types';
+import type { Match } from '../../types/match.types';
 
 const API_URL = 'http://localhost:8080';
 
@@ -12,23 +14,9 @@ const getImageUrl = (path: string | null) => {
     return `${API_URL}${cleanPath}`;
 };
 
-interface Tournament { id: number; name: string; season: string; }
-interface Match {
-    id: number;
-    homeTeamId: number; homeTeam: string; homeLogo: string;
-    awayTeamId: number; awayTeam: string; awayLogo: string;
-    matchDate: string;
-    roundName: string;
-    groupName: string;
-    stadium: string;
-    homeScore: number;
-    awayScore: number;
-    status: 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED';
-}
-
 export const AdminMatchPage = () => {
     const navigate = useNavigate();
-    const [tournaments, setTournaments] = useState<Tournament[]>([]);
+    const [tournaments, setTournaments] = useState<TournamentBasic[]>([]);
     const [selectedTourId, setSelectedTourId] = useState<number | null>(null);
     const [matches, setMatches] = useState<Match[]>([]);
     const [loading, setLoading] = useState(false);

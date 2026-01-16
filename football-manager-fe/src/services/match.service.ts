@@ -1,44 +1,12 @@
 import axiosClient from './api/client';
+import type {
+    Match,
+    CreateMatchRequest,
+    UpdateMatchRequest,
+    MatchEventDTO,
+} from '../types/match.types';
 
-export interface Match {
-    id: number;
-    homeTeamId: number;
-    homeTeam: string;
-    homeLogo: string;
-    awayTeamId: number;
-    awayTeam: string;
-    awayLogo: string;
-    matchDate: string;
-    roundName: string;
-    groupName: string;
-    stadium: string;
-    homeScore: number;
-    awayScore: number;
-    status: 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED';
-}
-
-export interface CreateMatchRequest {
-    tournamentId: number;
-    homeTeamId: number;
-    awayTeamId: number;
-    matchDate: string;
-    stadium: string;
-    roundName: string;
-}
-
-export interface UpdateMatchRequest {
-    matchDate: string;
-    stadium: string;
-    status?: 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED';
-}
-
-export interface MatchEventDTO {
-    matchId: number;
-    playerId: number;
-    eventType: 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION';
-    minute: number;
-    teamId: number;
-}
+export type { Match, CreateMatchRequest, UpdateMatchRequest, MatchEventDTO };
 
 export const matchService = {
     /**

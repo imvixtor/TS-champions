@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { playerService, teamService } from '../../services';
+import type { Team } from '../../types/team.types';
+import type { Player } from '../../types/player.types';
 
 const API_URL = 'http://localhost:8080';
 
@@ -11,9 +13,9 @@ export const AdminPlayerPage = () => {
     const [avatar, setAvatar] = useState<File | null>(null);
     
     // State Data
-    const [teams, setTeams] = useState<any[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
     const [selectedTeamId, setSelectedTeamId] = useState<string>(''); // Đội đang chọn để xem/thêm
-    const [players, setPlayers] = useState<any[]>([]); // List cầu thủ của đội đó
+    const [players, setPlayers] = useState<Player[]>([]); // List cầu thủ của đội đó
     const [loading, setLoading] = useState(false);
 
     // 1. Load danh sách Đội bóng (để bỏ vào Dropdown)
@@ -22,7 +24,7 @@ export const AdminPlayerPage = () => {
             .then(data => {
                 setTeams(data);
                 if (data.length > 0) {
-                    setSelectedTeamId(data[0].id); // Mặc định chọn đội đầu tiên
+                    setSelectedTeamId(data[0].id.toString()); // Mặc định chọn đội đầu tiên
                 }
             })
             .catch(err => console.error("Lỗi tải đội:", err));
@@ -80,10 +82,13 @@ export const AdminPlayerPage = () => {
             setName(''); setShirtNumber(''); setAvatar(null); // Reset form
             fetchPlayers(selectedTeamId); // Load lại danh sách ngay
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Lỗi thêm:", error);
-            if (error.response?.status === 403) alert("❌ Lỗi quyền hạn (403). Hãy logout và login lại!");
-            else alert("❌ Lỗi thêm cầu thủ! Kiểm tra console.");
+            if ((error as { response?: { status?: number } })?.response?.status === 403) {
+                alert("❌ Lỗi quyền hạn (403). Hãy logout và login lại!");
+            } else {
+                alert("❌ Lỗi thêm cầu thủ! Kiểm tra console.");
+            }
         } finally {
             setLoading(false);
         }

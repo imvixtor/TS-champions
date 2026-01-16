@@ -1,8 +1,6 @@
-export interface User {
-    username: string;
-    role: string;
-    teamId?: number; 
-}
+import type { User } from '../types/auth.types';
+
+export type { User };
 
 export const getInitialUser = (): User | null => {
     const token = localStorage.getItem("token");

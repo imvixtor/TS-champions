@@ -3,14 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { authService } from '../../services/auth.service';
 import { useAuth } from '../../hooks/useAuth';
-
-// Interface cho Token đã giải mã
-interface DecodedToken {
-    sub: string;    // Username
-    role: string;   // Role (ADMIN, COACH, USER)
-    teamId?: number; // TeamID (Backend gửi lên)
-    exp: number;
-}
+import type { DecodedToken } from '../../types/auth.types';
 
 export const LoginPage = () => {
     const [username, setUsername] = useState('');

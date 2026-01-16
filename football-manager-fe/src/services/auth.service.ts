@@ -1,13 +1,7 @@
 import axiosClient from './api/client';
+import type { LoginRequest, LoginResponse } from '../types/auth.types';
 
-export interface LoginRequest {
-    username: string;
-    password: string;
-}
-
-export interface LoginResponse {
-    jwtToken: string;
-}
+export type { LoginRequest, LoginResponse };
 
 export const authService = {
     /**

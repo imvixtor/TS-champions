@@ -1,14 +1,10 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { getInitialUser, type User } from "../utils/auth.utils";
+import { getInitialUser } from "../utils/auth.utils";
+import type { User, AuthContextType } from "../types/auth.types";
 import { AuthContext } from "./AuthContext";
 
-export interface AuthContextType {
-    user: User | null;
-    login: (token: string, userData: User) => void;
-    logout: () => void;
-    isAuthenticated: boolean;
-}
+export type { AuthContextType };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Lấy trạng thái ban đầu từ LocalStorage (thông qua hàm getInitialUser)

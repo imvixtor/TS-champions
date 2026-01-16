@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { tournamentService, teamService } from '../../services';
+import type { TeamBasic } from '../../types/team.types';
+import type { Tournament } from '../../types/tournament.types';
+import type { TournamentStanding } from '../../types/standing.types';
 
 const API_URL = 'http://localhost:8080';
 
@@ -16,40 +19,11 @@ const getImageUrl = (path: string | null) => {
     return `${API_URL}${cleanPath}`;
 };
 
-// --- INTERFACES ---
-interface Team {
-    id: number;
-    name: string;
-    logo: string;
-}
-
-interface Tournament {
-    id: number;
-    name: string;
-    season: string;
-    startDate: string;
-    endDate: string;
-}
-
-interface Standing {
-    teamId: number;      
-    teamName: string;
-    teamLogo: string;
-    groupName: string;   
-    isSeeded: boolean;   
-    points: number;
-    played: number;
-    won: number;
-    drawn: number;
-    lost: number;
-    gd: number;
-}
-
 export const AdminTournamentPage = () => {
     // --- STATE DATA ---
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
-    const [allTeams, setAllTeams] = useState<Team[]>([]); // Kho đội bóng
-    const [standings, setStandings] = useState<Standing[]>([]); // Đội ĐÃ tham gia giải
+    const [allTeams, setAllTeams] = useState<TeamBasic[]>([]); // Kho đội bóng
+    const [standings, setStandings] = useState<TournamentStanding[]>([]); // Đội ĐÃ tham gia giải
 
     // --- STATE UI ---
     const [loading, setLoading] = useState(false);
@@ -244,7 +218,7 @@ export const AdminTournamentPage = () => {
         if (!acc[group]) acc[group] = [];
         acc[group].push(curr);
         return acc;
-    }, {} as Record<string, Standing[]>);
+    }, {} as Record<string, TournamentStanding[]>);
 
 
     // ================== GIAO DIỆN CHI TIẾT (VIEW MODE = DETAIL) ==================

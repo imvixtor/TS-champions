@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { publicService } from '../../services/public.service';
 import { Navbar } from '../../components/common/Navbar';
+import type { TournamentBasic } from '../../types/tournament.types';
+import type { StandingWithGroup } from '../../types/standing.types';
 
 const API_URL = 'http://localhost:8080';
 
@@ -13,30 +15,10 @@ const getImageUrl = (path: string | null) => {
     return `${API_URL}${cleanPath}`;
 };
 
-// --- INTERFACES ---
-interface Tournament {
-    id: number;
-    name: string;
-    season: string;
-}
-
-interface Standing {
-    teamId: number;
-    teamName: string;
-    teamLogo: string;
-    groupName: string;
-    played: number;
-    won: number;
-    drawn: number;
-    lost: number;
-    gd: number;
-    points: number;
-}
-
 export const StandingPage = () => {
-    const [tournaments, setTournaments] = useState<Tournament[]>([]);
+    const [tournaments, setTournaments] = useState<TournamentBasic[]>([]);
     const [selectedTourId, setSelectedTourId] = useState<number | null>(null);
-    const [standings, setStandings] = useState<Standing[]>([]);
+    const [standings, setStandings] = useState<StandingWithGroup[]>([]);
     const [loading, setLoading] = useState(false);
 
     // 1. Tải danh sách giải đấu
@@ -77,7 +59,7 @@ export const StandingPage = () => {
         if (!acc[group]) acc[group] = [];
         acc[group].push(curr);
         return acc;
-    }, {} as Record<string, Standing[]>);
+    }, {} as Record<string, StandingWithGroup[]>);
 
     // Sắp xếp tên bảng theo thứ tự A, B, C...
     const sortedGroupNames = Object.keys(groupedStandings).sort();

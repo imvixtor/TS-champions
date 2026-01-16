@@ -1,51 +1,21 @@
 import axiosClient from './api/client';
+import type {
+    Tournament,
+    CreateTournamentRequest,
+    UpdateTournamentRequest,
+    AddTeamsRequest,
+    ManualDrawRequest,
+} from '../types/tournament.types';
+import type { TournamentStanding } from '../types/standing.types';
 
-export interface Tournament {
-    id: number;
-    name: string;
-    season: string;
-    startDate: string;
-    endDate: string;
-}
-
-export interface CreateTournamentRequest {
-    name: string;
-    season: string;
-    startDate: string;
-    endDate: string;
-}
-
-export interface UpdateTournamentRequest {
-    name: string;
-    season: string;
-    startDate: string;
-    endDate: string;
-}
-
-export interface Standing {
-    teamId: number;
-    teamName: string;
-    teamLogo: string;
-    played: number;
-    won: number;
-    drawn: number;
-    lost: number;
-    goalsFor: number;
-    goalsAgainst: number;
-    goalDifference: number;
-    points: number;
-}
-
-export interface AddTeamsRequest {
-    teamIds: number[];
-}
-
-export interface ManualDrawRequest {
-    groups: Array<{
-        groupName: string;
-        teamIds: number[];
-    }>;
-}
+export type {
+    Tournament,
+    CreateTournamentRequest,
+    UpdateTournamentRequest,
+    AddTeamsRequest,
+    ManualDrawRequest,
+};
+export type { TournamentStanding as Standing };
 
 export const tournamentService = {
     /**
@@ -80,8 +50,8 @@ export const tournamentService = {
     /**
      * Lấy bảng xếp hạng
      */
-    getStandings: async (tournamentId: number): Promise<Standing[]> => {
-        const response = await axiosClient.get<Standing[]>(`/champions/tournament/${tournamentId}/standings`);
+    getStandings: async (tournamentId: number): Promise<TournamentStanding[]> => {
+        const response = await axiosClient.get<TournamentStanding[]>(`/champions/tournament/${tournamentId}/standings`);
         return response.data;
     },
 

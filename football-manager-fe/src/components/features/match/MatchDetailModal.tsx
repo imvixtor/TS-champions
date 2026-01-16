@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { publicService } from '../../../services/public.service';
+import type { MatchDetailProps, MatchWithEvents, MatchEvent } from '../../../types/match.types';
 
 const API_URL = 'http://localhost:8080';
 
@@ -22,13 +23,8 @@ const EventIcon = ({ type }: { type: string }) => {
     }
 };
 
-interface MatchDetailProps {
-    matchId: number;
-    onClose: () => void;
-}
-
 export const MatchDetailModal = ({ matchId, onClose }: MatchDetailProps) => {
-    const [match, setMatch] = useState<any>(null);
+    const [match, setMatch] = useState<MatchWithEvents | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -114,7 +110,7 @@ export const MatchDetailModal = ({ matchId, onClose }: MatchDetailProps) => {
                                 <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-200 -translate-x-1/2 rounded-full"></div>
 
                                 {match.events && match.events.length > 0 ? (
-                                    match.events.map((evt: any, idx: number) => {
+                                    match.events.map((evt: MatchEvent, idx: number) => {
                                         const isHomeEvent = evt.teamId === match.homeTeamId;
                                         return (
                                             <div key={idx} className={`flex items-center w-full ${isHomeEvent ? 'flex-row' : 'flex-row-reverse'}`}>

@@ -1,11 +1,6 @@
-import type { JSX } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-
-interface ProtectedRouteProps {
-    children: JSX.Element;
-    role: string;
-}
+import type { ProtectedRouteProps } from '../types/common.types';
 
 export const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
     const { user } = useAuth();
