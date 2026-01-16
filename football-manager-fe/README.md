@@ -1,73 +1,185 @@
-# React + TypeScript + Vite
+# ⚽ Football Manager Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ứng dụng web quản lý giải đấu bóng đá được xây dựng với React, TypeScript và Vite.
 
-Currently, two official plugins are available:
+## 🚀 Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** - UI Framework
+- **TypeScript** - Type Safety
+- **Vite** - Build Tool & Dev Server
+- **React Router** - Client-side Routing
+- **Axios** - HTTP Client
+- **Tailwind CSS** - Utility-first CSS Framework
 
-## React Compiler
+## 📁 Cấu Trúc Dự Án
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── components/     # React Components
+├── pages/          # Page Components
+├── services/       # API Services
+├── hooks/          # Custom Hooks
+├── types/          # TypeScript Types
+├── utils/          # Utility Functions
+├── routes/         # Routing Configuration
+├── contexts/       # React Contexts
+└── config/         # Configuration
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🏃 Bắt Đầu Nhanh
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js >= 18.x
+- npm hoặc yarn
+
+### Installation
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd football-manager-fe
+
+# Install dependencies
+npm install
+
+# Tạo file .env.local
+echo "VITE_API_URL=http://localhost:8080" > .env.local
+
+# Chạy dev server
+npm run dev
 ```
+
+Ứng dụng sẽ chạy tại `http://localhost:5173`
+
+## 📚 Tài Liệu
+
+### Cho Người Mới
+
+- **[Quick Start Guide](./docs/QUICK_START.md)** - Hướng dẫn nhanh để bắt đầu
+- **[Architecture Guide](./docs/ARCHITECTURE.md)** - Tài liệu kiến trúc chi tiết
+
+### Cho Developers
+
+- **[Refactor Plan](./docs/REFACTOR_PLAN.md)** - Kế hoạch refactor dự án
+- **[Collaboration Guide](../COLLABORATION_GUIDE.md)** - Quy trình cộng tác
+
+## 🛠️ Scripts
+
+```bash
+# Development
+npm run dev          # Chạy dev server
+
+# Build
+npm run build        # Build cho production
+
+# Linting
+npm run lint         # Chạy ESLint
+
+# Preview
+npm run preview      # Preview production build
+```
+
+## 🏗️ Kiến Trúc
+
+Dự án sử dụng kiến trúc **Feature-Based** với các layer rõ ràng:
+
+- **Presentation Layer** - Components và Pages
+- **Business Logic Layer** - Services và Hooks
+- **Data Layer** - API Services
+- **Infrastructure Layer** - Utils, Config, Types
+
+Xem chi tiết tại [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+
+## 📖 Hướng Dẫn Đọc Code
+
+### Tìm Feature
+
+1. **Pages** → `pages/[feature]/` - Trang chính của feature
+2. **Components** → `components/features/[feature]/` - Components của feature
+3. **Services** → `services/[feature].service.ts` - API calls
+4. **Types** → `types/[feature].types.ts` - Type definitions
+
+### Luồng Code
+
+```
+User Action → Component → Service → API → Response → State → UI Re-render
+```
+
+Xem chi tiết tại [QUICK_START.md](./docs/QUICK_START.md)
+
+## 🤝 Đóng Góp
+
+### Quy Trình
+
+1. Fork repository
+2. Tạo branch: `git checkout -b feature/ten-tinh-nang`
+3. Commit changes: `git commit -m "feat: thêm tính năng X"`
+4. Push branch: `git push origin feature/ten-tinh-nang`
+5. Tạo Pull Request
+
+### Code Style
+
+- Sử dụng TypeScript types
+- Tuân thủ ESLint rules
+- Sử dụng barrel exports
+- Không hardcode values
+- Không duplicate code
+
+Xem chi tiết tại [ARCHITECTURE.md](./docs/ARCHITECTURE.md#best-practices)
+
+## 📝 Environment Variables
+
+Tạo file `.env.local`:
+
+```env
+VITE_API_URL=http://localhost:8080
+```
+
+## 🧪 Testing
+
+```bash
+# Chạy linter
+npm run lint
+
+# Kiểm tra TypeScript
+npm run build
+```
+
+## 📦 Build
+
+```bash
+# Build cho production
+npm run build
+
+# Output sẽ ở thư mục dist/
+```
+
+## 🐛 Troubleshooting
+
+### Lỗi Import
+
+- Đảm bảo sử dụng barrel exports: `import { X } from '@/components'`
+- Kiểm tra đường dẫn import có đúng không
+
+### Lỗi TypeScript
+
+- Chạy `npm run build` để xem lỗi chi tiết
+- Đảm bảo đã định nghĩa types trong `types/`
+
+### API không kết nối được
+
+- Kiểm tra `VITE_API_URL` trong `.env.local`
+- Đảm bảo backend đang chạy
+
+## 📄 License
+
+[License information]
+
+## 👥 Team
+
+Development Team
+
+---
+
+**Cần giúp đỡ?** Xem [ARCHITECTURE.md](./docs/ARCHITECTURE.md) hoặc [QUICK_START.md](./docs/QUICK_START.md)
