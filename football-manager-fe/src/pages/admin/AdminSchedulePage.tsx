@@ -1,15 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { publicService, teamService, matchService } from '../../services';
-
-// Helper: Xử lý ảnh (để hiển thị Logo)
-const API_URL = 'http://localhost:8080';
-const getImageUrl = (path: string | null) => {
-    if (!path) return 'https://placehold.co/60?text=NoLogo';
-    if (path.startsWith('http')) return path;
-    let cleanPath = path.replace(/\\/g, '/');
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
-    return `${API_URL}${cleanPath}`;
-};
+import { getImageUrl } from '../../utils';
 
 export const AdminSchedulePage = () => {
     // Data List

@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { playerService } from '../../services';
 import { useAuth } from '../../hooks';
-
-const API_URL = 'http://localhost:8080';
+import { getImageUrl } from '../../utils';
 
 export const CoachLineupPage = () => {
     const [searchParams] = useSearchParams();
@@ -135,7 +134,7 @@ export const CoachLineupPage = () => {
                         {loading ? <div className="text-center py-4">Đang tải...</div> : availablePlayers.map(p => (
                             <div key={p.id} onClick={() => moveToStarter(p)} 
                                 className="flex items-center gap-3 p-2 rounded-lg border border-gray-100 hover:border-emerald-500 hover:bg-emerald-50 cursor-pointer transition group">
-                                <img src={p.avatar ? `${API_URL}${p.avatar}` : 'https://placehold.co/40'} className="w-10 h-10 rounded-full object-cover"/>
+                                <img src={getImageUrl(p.avatar)} className="w-10 h-10 rounded-full object-cover"/>
                                 <div>
                                     <div className="font-bold text-sm text-slate-700 group-hover:text-emerald-700">{p.name}</div>
                                     <div className="text-xs text-gray-400">{p.position} • #{p.shirtNumber}</div>
@@ -164,7 +163,7 @@ export const CoachLineupPage = () => {
                         {starters.map((p, index) => (
                             <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
                                 <span className="font-black text-emerald-200 text-xl w-6 text-center">{index + 1}</span>
-                                <img src={p.avatar ? `${API_URL}${p.avatar}` : 'https://placehold.co/40'} className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"/>
+                                <img src={getImageUrl(p.avatar)} className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"/>
                                 <div className="flex-1">
                                     <div className="font-bold text-sm text-slate-800">{p.name}</div>
                                     <div className="text-xs text-emerald-600 font-bold">{p.position}</div>
@@ -188,7 +187,7 @@ export const CoachLineupPage = () => {
                         {subs.length === 0 && <div className="text-center text-gray-400 mt-10 italic">Chưa có cầu thủ dự bị</div>}
                         {subs.map(p => (
                             <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 border border-gray-100">
-                                <img src={p.avatar ? `${API_URL}${p.avatar}` : 'https://placehold.co/40'} className="w-10 h-10 rounded-full object-cover grayscale opacity-70"/>
+                                <img src={getImageUrl(p.avatar)} className="w-10 h-10 rounded-full object-cover grayscale opacity-70"/>
                                 <div className="flex-1">
                                     <div className="font-bold text-sm text-gray-600">{p.name}</div>
                                     <div className="text-xs text-gray-400">{p.position}</div>

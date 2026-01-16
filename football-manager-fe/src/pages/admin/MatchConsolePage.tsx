@@ -1,17 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { matchService, playerService } from '../../services';
-
-const API_URL = 'http://localhost:8080';
-
-// Helper: Lấy ảnh
-const getImageUrl = (path: string | null) => {
-    if (!path) return 'https://placehold.co/40';
-    if (path.startsWith('http')) return path;
-    let cleanPath = path.replace(/\\/g, '/');
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
-    return `${API_URL}${cleanPath}`;
-};
+import { getImageUrl } from '../../utils';
 
 export const MatchConsolePage = () => {
     const { id } = useParams();

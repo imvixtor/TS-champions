@@ -2,16 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { matchService, tournamentService, playerService } from '../../services';
 import type { TournamentBasic, Match } from '../../types';
-
-const API_URL = 'http://localhost:8080';
-
-const getImageUrl = (path: string | null) => {
-    if (!path) return 'https://placehold.co/40';
-    if (path.startsWith('http')) return path;
-    let cleanPath = path.replace(/\\/g, '/');
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
-    return `${API_URL}${cleanPath}`;
-};
+import { getImageUrl } from '../../utils';
 
 export const AdminMatchPage = () => {
     const navigate = useNavigate();

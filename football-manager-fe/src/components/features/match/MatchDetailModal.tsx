@@ -1,17 +1,7 @@
 import { useEffect, useState } from 'react';
 import { publicService } from '../../../services';
 import type { MatchDetailProps, MatchWithEvents, MatchEvent } from '../../../types';
-
-const API_URL = 'http://localhost:8080';
-
-// Helper xử lý ảnh
-const getImageUrl = (path: string | null) => {
-    if (!path) return 'https://placehold.co/40';
-    if (path.startsWith('http')) return path;
-    let cleanPath = path.replace(/\\/g, '/');
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
-    return `${API_URL}${cleanPath}`;
-};
+import { getImageUrl } from '../../../utils';
 
 // Component Icon sự kiện
 const EventIcon = ({ type }: { type: string }) => {

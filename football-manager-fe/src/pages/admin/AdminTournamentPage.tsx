@@ -1,21 +1,7 @@
 import { useEffect, useState } from 'react';
 import { tournamentService, teamService } from '../../services';
 import type { TeamBasic, Tournament, TournamentStanding } from '../../types';
-
-const API_URL = 'http://localhost:8080';
-
-// --- HÀM XỬ LÝ ẢNH (Fix lỗi hiển thị trên Windows & Null) ---
-const getImageUrl = (path: string | null) => {
-    if (!path) return 'https://placehold.co/40';
-    if (path.startsWith('http')) return path;
-    
-    // Xử lý đường dẫn Windows bị lỗi dấu \ thành /
-    let cleanPath = path.replace(/\\/g, '/');
-    // Đảm bảo bắt đầu bằng /
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
-    
-    return `${API_URL}${cleanPath}`;
-};
+import { getImageUrl } from '../../utils';
 
 export const AdminTournamentPage = () => {
     // --- STATE DATA ---

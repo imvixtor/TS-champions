@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { playerService, teamService } from '../../services';
 import type { Team, Player } from '../../types';
-
-const API_URL = 'http://localhost:8080';
+import { getImageUrl } from '../../utils';
 
 export const AdminPlayerPage = () => {
     // State Form
@@ -193,7 +192,7 @@ export const AdminPlayerPage = () => {
                                             {p.shirtNumber}
                                         </td>
                                         <td className="p-3">
-                                            <img src={p.avatar ? `${API_URL}${p.avatar}` : 'https://placehold.co/40'} 
+                                            <img src={getImageUrl(p.avatar)} 
                                                  className="w-10 h-10 rounded-full object-cover border border-gray-200"/>
                                         </td>
                                         <td className="p-3">

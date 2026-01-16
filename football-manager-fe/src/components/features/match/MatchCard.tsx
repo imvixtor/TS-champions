@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080';
+import { getImageUrl } from '../../../utils';
 
 export const MatchCard = ({ match }: { match: any }) => {
     const isLive = match.status === 'LIVE';
@@ -28,7 +28,7 @@ export const MatchCard = ({ match }: { match: any }) => {
                         {match.homeTeam}
                     </span>
                     <img 
-                        src={match.homeLogo ? `${API_URL}${match.homeLogo}` : 'https://placehold.co/60'} 
+                        src={getImageUrl(match.homeLogo, 'https://placehold.co/60')} 
                         className="w-10 h-10 md:w-14 md:h-14 object-contain drop-shadow-md" 
                         alt="Home" 
                     />
@@ -58,7 +58,7 @@ export const MatchCard = ({ match }: { match: any }) => {
                 {/* ĐỘI KHÁCH (Phải/Dưới) */}
                 <div className="flex-1 flex flex-row items-center justify-start gap-3 w-full md:w-auto">
                     <img 
-                        src={match.awayLogo ? `${API_URL}${match.awayLogo}` : 'https://placehold.co/60'} 
+                        src={getImageUrl(match.awayLogo, 'https://placehold.co/60')} 
                         className="w-10 h-10 md:w-14 md:h-14 object-contain drop-shadow-md" 
                         alt="Away" 
                     />

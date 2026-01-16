@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { playerService } from '../../services';
 import { useAuth } from '../../hooks';
-
-const API_URL = 'http://localhost:8080';
+import { getImageUrl } from '../../utils';
 
 export const CoachSquadPage = () => {
     const { user } = useAuth();
@@ -50,7 +49,7 @@ export const CoachSquadPage = () => {
                             {/* Avatar */}
                             <div className="w-20 h-20 rounded-full border-2 border-emerald-100 p-1 shrink-0">
                                 <img 
-                                    src={p.avatar ? `${API_URL}${p.avatar}` : 'https://placehold.co/100?text=Player'} 
+                                    src={getImageUrl(p.avatar, 'https://placehold.co/100?text=Player')} 
                                     className="w-full h-full object-cover rounded-full"
                                 />
                             </div>

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { teamService, playerService } from '../../services';
-
-const API_URL = 'http://localhost:8080';
+import { getImageUrl } from '../../utils';
 
 export const AdminTeamPage = () => {
     // State Form & List (Cũ)
@@ -168,7 +167,7 @@ export const AdminTeamPage = () => {
                                             <tr key={p.id}>
                                                 <td className="p-3 font-bold text-center text-blue-600 text-lg">#{p.shirtNumber}</td>
                                                 <td className="p-3">
-                                                    <img src={p.avatar ? `${API_URL}${p.avatar}` : 'https://placehold.co/40'} 
+                                                    <img src={getImageUrl(p.avatar)} 
                                                          className="w-10 h-10 rounded-full object-cover border border-gray-200"/>
                                                 </td>
                                                 <td className="p-3 font-bold text-gray-700">{p.name}</td>
@@ -268,7 +267,7 @@ export const AdminTeamPage = () => {
                             {teams.map((team) => (
                                 <tr key={team.id} className="hover:bg-gray-50">
                                     <td className="p-3 text-center">
-                                        <img src={team.logo ? `${API_URL}${team.logo}` : 'https://placehold.co/40'} className="w-12 h-12 object-contain mx-auto"/>
+                                        <img src={getImageUrl(team.logo)} className="w-12 h-12 object-contain mx-auto"/>
                                     </td>
                                     <td className="p-3">
                                         <div className="font-bold text-lg">{team.name} <span className="text-gray-400 text-xs">({team.shortName})</span></div>

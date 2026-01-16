@@ -2,17 +2,7 @@ import { useEffect, useState } from 'react';
 import { publicService } from '../../services';
 import { Navbar } from '../../components';
 import type { TournamentBasic, StandingWithGroup } from '../../types';
-
-const API_URL = 'http://localhost:8080';
-
-// --- HÀM XỬ LÝ ẢNH ---
-const getImageUrl = (path: string | null) => {
-    if (!path) return 'https://placehold.co/40';
-    if (path.startsWith('http')) return path;
-    let cleanPath = path.replace(/\\/g, '/');
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
-    return `${API_URL}${cleanPath}`;
-};
+import { getImageUrl } from '../../utils';
 
 export const StandingPage = () => {
     const [tournaments, setTournaments] = useState<TournamentBasic[]>([]);
