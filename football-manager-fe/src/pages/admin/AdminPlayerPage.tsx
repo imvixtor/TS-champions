@@ -3,18 +3,41 @@ import { playerService, teamService } from '../../services';
 import type { Team, Player } from '../../types';
 import { getImageUrl } from '../../utils';
 
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, Trash2, UserPlus } from "lucide-react"
+
 export const AdminPlayerPage = () => {
     // State Form
     const [name, setName] = useState('');
     const [shirtNumber, setShirtNumber] = useState('');
     const [position, setPosition] = useState('FW');
     const [avatar, setAvatar] = useState<File | null>(null);
-    
+
     // State Data
     const [teams, setTeams] = useState<Team[]>([]);
     const [selectedTeamId, setSelectedTeamId] = useState<string>(''); // Đội đang chọn để xem/thêm
     const [players, setPlayers] = useState<Player[]>([]); // List cầu thủ của đội đó
     const [loading, setLoading] = useState(false);
+    const [loadingPlayers, setLoadingPlayers] = useState(false);
 
     // 1. Load danh sách Đội bóng (để bỏ vào Dropdown)
     useEffect(() => {
@@ -36,39 +59,25 @@ export const AdminPlayerPage = () => {
     }, [selectedTeamId]);
 
     const fetchPlayers = async (teamId: string) => {
+        setLoadingPlayers(true);
         try {
             const data = await playerService.getPlayersByTeam(Number(teamId));
             setPlayers(data);
         } catch (error) {
             console.error("Lỗi tải cầu thủ:", error);
             setPlayers([]); // Nếu lỗi thì reset list
+        } finally {
+            setLoadingPlayers(false);
         }
     };
 
     // 3. Xử lý Thêm Cầu Thủ
     const handleCreatePlayer = async (e: React.FormEvent) => {
         e.preventDefault();
-        if(!selectedTeamId) return alert("Vui lòng chọn đội bóng trước!");
+        if (!selectedTeamId) return alert("Vui lòng chọn đội bóng trước!");
         setLoading(true);
 
         try {
-            const formData = new FormData();
-
-            // Đóng gói JSON
-            const playerData = { 
-                name, 
-                shirtNumber: Number(shirtNumber), 
-                position, 
-                teamId: Number(selectedTeamId) // Lấy ID đội đang chọn
-            };
-            const jsonBlob = new Blob([JSON.stringify(playerData)], { type: 'application/json' });
-            
-            formData.append('player', jsonBlob);
-
-            if (avatar) {
-                formData.append('avatar', avatar);
-            }
-
             await playerService.createPlayer({
                 name,
                 shirtNumber: Number(shirtNumber),
@@ -78,11 +87,15 @@ export const AdminPlayerPage = () => {
 
             alert("✅ Thêm cầu thủ thành công!");
             setName(''); setShirtNumber(''); setAvatar(null); // Reset form
+            // Reset file input manually if needed
+            const fileInput = document.getElementById('avatarInput') as HTMLInputElement;
+            if (fileInput) fileInput.value = '';
+
             fetchPlayers(selectedTeamId); // Load lại danh sách ngay
 
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error("Lỗi thêm:", error);
-            if ((error as { response?: { status?: number } })?.response?.status === 403) {
+            if (error?.response?.status === 403) {
                 alert("❌ Lỗi quyền hạn (403). Hãy logout và login lại!");
             } else {
                 alert("❌ Lỗi thêm cầu thủ! Kiểm tra console.");
@@ -94,8 +107,8 @@ export const AdminPlayerPage = () => {
 
     // 4. Xử lý Xóa Cầu Thủ
     const handleDelete = async (playerId: number) => {
-        if(!confirm("Bạn có chắc chắn muốn xóa cầu thủ này?")) return;
-        
+        if (!confirm("Bạn có chắc chắn muốn xóa cầu thủ này?")) return;
+
         try {
             await playerService.deletePlayer(playerId);
             alert("🗑️ Đã xóa thành công!");
@@ -107,121 +120,155 @@ export const AdminPlayerPage = () => {
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+
             {/* CỘT TRÁI: FORM THÊM CẦU THỦ */}
-            <div className="md:col-span-4 bg-white p-6 rounded-xl shadow-md border border-gray-200 h-fit">
-                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b pb-2">➕ THÊM CẦU THỦ</h2>
-                
-                <form onSubmit={handleCreatePlayer} className="space-y-4">
-                    {/* Chọn đội để thêm vào */}
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                        <label className="block font-bold text-blue-800 mb-1 text-sm">Đang thao tác với đội:</label>
-                        <select 
-                            className="w-full border p-2 rounded bg-white font-bold text-slate-700"
-                            value={selectedTeamId}
-                            onChange={e => setSelectedTeamId(e.target.value)}
-                        >
-                            {teams.map(t => (
-                                <option key={t.id} value={t.id}>{t.name}</option>
-                            ))}
-                        </select>
-                    </div>
+            <div className="md:col-span-4 md:sticky md:top-6 h-fit">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <UserPlus className="w-5 h-5" /> Thêm Cầu Thủ
+                        </CardTitle>
+                        <CardDescription>
+                            Tạo hồ sơ cầu thủ mới cho đội bóng.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleCreatePlayer} className="space-y-4">
+                            {/* Chọn đội để thêm vào */}
+                            <div className="space-y-2">
+                                <Label>Chọn Đội Bóng</Label>
+                                <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Chọn đội..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {teams.map(t => (
+                                            <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-bold mb-1">Tên Cầu Thủ</label>
-                        <input className="w-full border p-2 rounded outline-blue-500"
-                            required value={name} onChange={e => setName(e.target.value)} placeholder="Nguyễn Văn A" />
-                    </div>
+                            <div className="space-y-2">
+                                <Label>Tên Cầu Thủ</Label>
+                                <Input required value={name} onChange={e => setName(e.target.value)} placeholder="Nguyễn Văn A" />
+                            </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <label className="block text-sm font-bold mb-1">Số Áo</label>
-                            <input type="number" className="w-full border p-2 rounded outline-blue-500"
-                                required value={shirtNumber} onChange={e => setShirtNumber(e.target.value)} placeholder="10" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold mb-1">Vị Trí</label>
-                            <select className="w-full border p-2 rounded outline-blue-500 bg-white" 
-                                value={position} onChange={e => setPosition(e.target.value)}>
-                                <option value="GK">Thủ môn</option>
-                                <option value="DF">Hậu vệ</option>
-                                <option value="MF">Tiền vệ</option>
-                                <option value="FW">Tiền đạo</option>
-                            </select>
-                        </div>
-                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Số Áo</Label>
+                                    <Input type="number" required value={shirtNumber} onChange={e => setShirtNumber(e.target.value)} placeholder="10" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Vị Trí</Label>
+                                    <Select value={position} onValueChange={setPosition}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="GK">Thủ môn</SelectItem>
+                                            <SelectItem value="DF">Hậu vệ</SelectItem>
+                                            <SelectItem value="MF">Tiền vệ</SelectItem>
+                                            <SelectItem value="FW">Tiền đạo</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-bold mb-1">Avatar</label>
-                        <input type="file" accept="image/*" 
-                            onChange={e => setAvatar(e.target.files ? e.target.files[0] : null)}
-                            className="w-full text-xs"/>
-                    </div>
+                            <div className="space-y-2">
+                                <Label>Avatar</Label>
+                                <Input id="avatarInput" type="file" accept="image/*" onChange={e => setAvatar(e.target.files ? e.target.files[0] : null)} className="cursor-pointer" />
+                            </div>
 
-                    <button disabled={loading} className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 shadow-lg">
-                        {loading ? 'Đang lưu...' : 'LƯU CẦU THỦ'}
-                    </button>
-                </form>
+                            <Button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-700">
+                                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                Lưu Cầu Thủ
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* CỘT PHẢI: DANH SÁCH CẦU THỦ */}
-            <div className="md:col-span-8 bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                <div className="flex justify-between items-center mb-4 border-b pb-2">
-                    <h2 className="text-xl font-bold text-slate-800">📋 DANH SÁCH CẦU THỦ</h2>
-                    <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">
-                        Tổng: {players.length}
-                    </span>
-                </div>
-
-                <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-gray-100 text-xs uppercase font-bold text-gray-600 sticky top-0">
-                            <tr>
-                                <th className="p-3 text-center">Số</th>
-                                <th className="p-3">Avatar</th>
-                                <th className="p-3">Tên & Vị trí</th>
-                                <th className="p-3 text-right">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 text-sm">
-                            {players.length > 0 ? (
-                                players.map((p) => (
-                                    <tr key={p.id} className="hover:bg-gray-50">
-                                        <td className="p-3 font-bold text-center text-blue-600 text-lg">
-                                            {p.shirtNumber}
-                                        </td>
-                                        <td className="p-3">
-                                            <img src={getImageUrl(p.avatar)} 
-                                                 className="w-10 h-10 rounded-full object-cover border border-gray-200"/>
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="font-bold text-slate-700">{p.name}</div>
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded 
-                                                ${p.position === 'GK' ? 'bg-yellow-100 text-yellow-700' : 
-                                                  p.position === 'FW' ? 'bg-red-100 text-red-700' : 
-                                                  p.position === 'MF' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {p.position}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 text-right">
-                                            <button onClick={() => handleDelete(p.id)} 
-                                                className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded transition" title="Xóa">
-                                                🗑️
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={4} className="text-center p-8 text-gray-400 italic">
-                                        Đội này chưa có cầu thủ nào.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+            <div className="md:col-span-8">
+                <Card className="h-full">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <div className="space-y-1">
+                            <CardTitle>Danh Sách Cầu Thủ</CardTitle>
+                            <CardDescription>
+                                Đang xem đội hình của <span className="font-bold text-primary">{teams.find(t => String(t.id) === selectedTeamId)?.name}</span>.
+                            </CardDescription>
+                        </div>
+                        <Badge variant="outline" className="text-sm px-3 py-1">Tổng: {players.length}</Badge>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingPlayers ? (
+                            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+                        ) : (
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[80px] text-center">Số</TableHead>
+                                            <TableHead className="w-[80px]">Avatar</TableHead>
+                                            <TableHead>Thông tin</TableHead>
+                                            <TableHead className="text-right">Hành động</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {players.length > 0 ? (
+                                            players.map((p) => (
+                                                <TableRow key={p.id}>
+                                                    <TableCell className="text-center">
+                                                        <div className="bg-slate-100 text-slate-700 font-black text-lg h-10 w-8 mx-auto flex items-center justify-center rounded border border-slate-200 shadow-sm font-mono">
+                                                            {p.shirtNumber}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <img
+                                                            src={getImageUrl(p.avatar)}
+                                                            className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                                                            alt={p.name}
+                                                            onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="font-bold text-base">{p.name}</div>
+                                                        <Badge variant="secondary" className={`mt-1 text-[10px] pointer-events-none
+                                                            ${p.position === 'GK' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                                                p.position === 'FW' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                    p.position === 'MF' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}
+                                                        `}>
+                                                            {p.position}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                            onClick={() => handleDelete(p.id)}
+                                                            title="Xóa cầu thủ"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={4} className="text-center h-40 text-muted-foreground italic">
+                                                    Đội này chưa có cầu thủ nào.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

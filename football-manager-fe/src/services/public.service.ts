@@ -2,7 +2,7 @@ import axiosClient from './api/client';
 import type { Tournament, Match, SearchMatchesParams, StandingWithGroup } from '../types';
 
 export type { Tournament, Match, SearchMatchesParams };
-export type { StandingWithGroup as Standing };
+export type { StandingWithGroup as PublicStanding };
 
 export const publicService = {
     /**

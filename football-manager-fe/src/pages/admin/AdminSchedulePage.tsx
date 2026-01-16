@@ -2,11 +2,26 @@ import { useEffect, useState, useMemo } from 'react';
 import { publicService, teamService, matchService } from '../../services';
 import { getImageUrl } from '../../utils';
 
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, Calendar, MapPin, ArrowRightLeft, Trophy, Info } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+
 export const AdminSchedulePage = () => {
     // Data List
     const [tournaments, setTournaments] = useState<any[]>([]);
     const [teams, setTeams] = useState<any[]>([]);
-    
+
     // Form State
     const [tournamentId, setTournamentId] = useState('');
     const [homeTeamId, setHomeTeamId] = useState('');
@@ -57,28 +72,28 @@ export const AdminSchedulePage = () => {
 
     const handleSchedule = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validation: Ngày đá không được trong quá khứ
         if (new Date(matchDate) < new Date()) {
             return alert("⚠️ Ngày thi đấu không thể ở trong quá khứ!");
         }
 
         if (homeTeamId === awayTeamId) return alert("❌ Đội nhà và Đội khách không được trùng nhau!");
-        
+
         setLoading(true);
         try {
             const payload = {
                 tournamentId: Number(tournamentId),
                 homeTeamId: Number(homeTeamId),
                 awayTeamId: Number(awayTeamId),
-                matchDate, 
+                matchDate,
                 stadium,
                 roundName
             };
 
             await matchService.createMatch(payload);
             alert("✅ Lên lịch trận đấu thành công!");
-            
+
             // Reset form thông minh (Giữ lại giải đấu và vòng để nhập tiếp cho nhanh)
             setHomeTeamId('');
             setAwayTeamId('');
@@ -93,174 +108,211 @@ export const AdminSchedulePage = () => {
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 animate-fade-in-up">
-            
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+
             {/* CỘT TRÁI: FORM NHẬP LIỆU */}
             <div className="lg:col-span-7 xl:col-span-8">
-                <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-                    <div className="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 className="text-xl font-black text-slate-800 uppercase flex items-center gap-2">
-                            📅 Thiết lập trận đấu
-                        </h2>
-                        <span className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full">Admin Mode</span>
-                    </div>
-                    
-                    <form onSubmit={handleSchedule} className="space-y-6">
-                        
-                        {/* 1. Giải Đấu & Vòng */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Giải Đấu</label>
-                                <select className="w-full border-2 border-gray-100 p-3 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 transition outline-none font-bold text-slate-700" required
-                                    value={tournamentId} onChange={e => setTournamentId(e.target.value)}>
-                                    <option value="">-- Chọn giải đấu --</option>
-                                    {tournaments.map(t => <option key={t.id} value={t.id}>{t.name} ({t.season})</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tên Vòng Đấu</label>
-                                <input className="w-full border-2 border-gray-100 p-3 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 transition outline-none font-bold" 
-                                    value={roundName} onChange={e => setRoundName(e.target.value)} placeholder="VD: Vòng 1, Chung kết" />
-                            </div>
-                        </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-blue-600" />
+                                Thiết Lập Trận Đấu
+                            </span>
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">Admin Mode</Badge>
+                        </CardTitle>
+                        <CardDescription>
+                            Tạo lịch thi đấu mới cho các giải đấu.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSchedule} className="space-y-6">
 
-                        {/* 2. Chọn Đội (Khu vực thông minh) */}
-                        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 relative">
-                            {/* Nút Swap nằm giữa */}
-                            <button type="button" onClick={handleSwapTeams} 
-                                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white border shadow-sm rounded-full flex items-center justify-center hover:rotate-180 transition duration-300 z-10 text-blue-600"
-                                title="Hoán đổi đội nhà/khách">
-                                ⇄
-                            </button>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Đội Nhà */}
-                                <div>
-                                    <label className="block text-xs font-bold text-blue-800 uppercase mb-1 flex items-center gap-1">
-                                        <span className="w-2 h-2 rounded-full bg-blue-600"></span> Đội Nhà (Home)
-                                    </label>
-                                    <select className="w-full border p-3 rounded-xl focus:border-blue-500 outline-none shadow-sm" required
-                                        value={homeTeamId} onChange={e => setHomeTeamId(e.target.value)}>
-                                        <option value="">-- Chọn đội nhà --</option>
-                                        {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                    </select>
+                            {/* 1. Giải Đấu & Vòng */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label>Giải Đấu</Label>
+                                    <Select value={tournamentId} onValueChange={setTournamentId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="-- Chọn giải đấu --" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {tournaments.map(t => (
+                                                <SelectItem key={t.id} value={String(t.id)}>{t.name} ({t.season})</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-
-                                {/* Đội Khách */}
-                                <div>
-                                    <label className="block text-xs font-bold text-red-800 uppercase mb-1 flex items-center gap-1">
-                                        <span className="w-2 h-2 rounded-full bg-red-600"></span> Đội Khách (Away)
-                                    </label>
-                                    <select className="w-full border p-3 rounded-xl focus:border-red-500 outline-none shadow-sm" required
-                                        value={awayTeamId} onChange={e => setAwayTeamId(e.target.value)}>
-                                        <option value="">-- Chọn đội khách --</option>
-                                        {teams.map(t => (
-                                            <option key={t.id} value={t.id} disabled={t.id === Number(homeTeamId)}>
-                                                {t.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                <div className="space-y-2">
+                                    <Label>Tên Vòng Đấu</Label>
+                                    <Input value={roundName} onChange={e => setRoundName(e.target.value)} placeholder="VD: Vòng 1, Chung kết" />
                                 </div>
                             </div>
-                        </div>
 
-                        {/* 3. Thời gian & Sân */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ngày giờ thi đấu</label>
-                                <input type="datetime-local" className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none font-mono text-sm" required
-                                    value={matchDate} onChange={e => setMatchDate(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Sân vận động</label>
-                                <input className="w-full border-2 border-gray-100 p-3 rounded-xl focus:border-blue-500 outline-none font-bold text-slate-700" required
-                                    value={stadium} onChange={e => setStadium(e.target.value)} placeholder="Tự động điền theo đội nhà..." />
-                            </div>
-                        </div>
+                            {/* 2. Chọn Đội (Khu vực thông minh) */}
+                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 relative">
+                                {/* Nút Swap nằm giữa */}
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={handleSwapTeams}
+                                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm bg-white hover:bg-slate-50 hover:rotate-180 transition-transform duration-300 z-10"
+                                    title="Hoán đổi đội nhà/khách"
+                                >
+                                    <ArrowRightLeft className="w-4 h-4 text-blue-600" />
+                                </Button>
 
-                        <button disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:shadow-lg hover:scale-[1.01] transition duration-200 text-lg flex items-center justify-center gap-2">
-                            {loading ? (
-                                <>⏳ Đang xử lý...</>
-                            ) : (
-                                <>✅ LƯU LỊCH THI ĐẤU</>
-                            )}
-                        </button>
-                    </form>
-                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Đội Nhà */}
+                                    <div className="space-y-2">
+                                        <Label className="flex items-center gap-2 text-blue-800">
+                                            <span className="w-2 h-2 rounded-full bg-blue-600"></span> Đội Nhà (Home)
+                                        </Label>
+                                        <Select value={homeTeamId} onValueChange={setHomeTeamId}>
+                                            <SelectTrigger className="border-blue-200 focus:ring-blue-200 bg-white">
+                                                <SelectValue placeholder="-- Chọn đội nhà --" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {teams.map(t => (
+                                                    <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* Đội Khách */}
+                                    <div className="space-y-2">
+                                        <Label className="flex items-center gap-2 text-red-800">
+                                            <span className="w-2 h-2 rounded-full bg-red-600"></span> Đội Khách (Away)
+                                        </Label>
+                                        <Select value={awayTeamId} onValueChange={setAwayTeamId}>
+                                            <SelectTrigger className="border-red-200 focus:ring-red-200 bg-white">
+                                                <SelectValue placeholder="-- Chọn đội khách --" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {teams.map(t => (
+                                                    <SelectItem key={t.id} value={String(t.id)} disabled={String(t.id) === homeTeamId}>
+                                                        {t.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 3. Thời gian & Sân */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label>Ngày giờ thi đấu</Label>
+                                    <Input
+                                        type="datetime-local"
+                                        value={matchDate} onChange={e => setMatchDate(e.target.value)}
+                                        required
+                                        className="font-mono"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Sân vận động</Label>
+                                    <Input
+                                        value={stadium} onChange={e => setStadium(e.target.value)}
+                                        placeholder="Tự động điền theo đội nhà..."
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 h-10 text-base">
+                                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                                Lưu Lịch Thi Đấu
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* CỘT PHẢI: LIVE PREVIEW (XEM TRƯỚC) */}
-            <div className="lg:col-span-5 xl:col-span-4">
-                <div className="sticky top-6">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Xem trước hiển thị</h3>
-                    
+            <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 h-fit">
+                <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                        <Info className="w-4 h-4" /> Xem trước hiển thị
+                    </h3>
+
                     {/* THẺ TRẬN ĐẤU (PREVIEW CARD) */}
-                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 relative">
+                    <Card className="overflow-hidden border-2 border-slate-100 shadow-lg">
                         {/* Header của thẻ */}
                         <div className="bg-slate-900 text-white p-4 text-center">
-                            <div className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-1">
+                            <div className="text-sm font-bold text-blue-300 uppercase tracking-widest mb-1 flex items-center justify-center gap-2">
+                                <Trophy className="w-4 h-4" />
                                 {selectedTournament ? selectedTournament.name : 'Chưa chọn giải'}
                             </div>
-                            <div className="text-[10px] text-gray-400 font-mono">
-                                {roundName}
+                            <div className="text-xs text-slate-400 font-mono">
+                                {roundName || 'Vòng ?'}
                             </div>
                         </div>
 
                         {/* Nội dung chính: Đội bóng */}
-                        <div className="p-8 flex items-center justify-between relative">
+                        <CardContent className="p-8 relative">
                             {/* Background mờ */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-50 opacity-50"></div>
-                            
-                            {/* Đội Nhà */}
-                            <div className="relative z-10 flex flex-col items-center w-1/3 text-center">
-                                <div className="w-16 h-16 bg-white rounded-full p-2 shadow-md mb-2 flex items-center justify-center border border-gray-100">
-                                    <img src={getImageUrl(selectedHomeTeam?.logoUrl || null)} className="w-full h-full object-contain" onError={(e)=>e.currentTarget.src='https://placehold.co/40'} />
-                                </div>
-                                <div className="font-bold text-slate-800 text-sm leading-tight">
-                                    {selectedHomeTeam ? selectedHomeTeam.name : 'Home Team'}
-                                </div>
-                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-slate-50/50 pointer-events-none"></div>
 
-                            {/* VS */}
-                            <div className="relative z-10 flex flex-col items-center w-1/3">
-                                <div className="text-2xl font-black text-gray-200">VS</div>
-                                {matchDate && (
-                                    <div className="mt-2 text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                                        {new Date(matchDate).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
+                            <div className="flex items-center justify-between relative z-10">
+                                {/* Đội Nhà */}
+                                <div className="flex flex-col items-center w-1/3 text-center space-y-2">
+                                    <div className="w-20 h-20 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border border-slate-100">
+                                        <img src={getImageUrl(selectedHomeTeam?.logoUrl)} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://placehold.co/60'} />
                                     </div>
-                                )}
-                            </div>
+                                    <div className="font-bold text-slate-800 text-sm leading-tight">
+                                        {selectedHomeTeam ? selectedHomeTeam.name : 'Home Team'}
+                                    </div>
+                                </div>
 
-                            {/* Đội Khách */}
-                            <div className="relative z-10 flex flex-col items-center w-1/3 text-center">
-                                <div className="w-16 h-16 bg-white rounded-full p-2 shadow-md mb-2 flex items-center justify-center border border-gray-100">
-                                    <img src={getImageUrl(selectedAwayTeam?.logoUrl || null)} className="w-full h-full object-contain" onError={(e)=>e.currentTarget.src='https://placehold.co/40'} />
+                                {/* VS */}
+                                <div className="flex flex-col items-center w-1/3 space-y-2">
+                                    <div className="text-3xl font-black text-slate-200">VS</div>
+                                    {matchDate && (
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-mono text-[10px]">
+                                            {new Date(matchDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                        </Badge>
+                                    )}
                                 </div>
-                                <div className="font-bold text-slate-800 text-sm leading-tight">
-                                    {selectedAwayTeam ? selectedAwayTeam.name : 'Away Team'}
+
+                                {/* Đội Khách */}
+                                <div className="flex flex-col items-center w-1/3 text-center space-y-2">
+                                    <div className="w-20 h-20 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border border-slate-100">
+                                        <img src={getImageUrl(selectedAwayTeam?.logoUrl)} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://placehold.co/60'} />
+                                    </div>
+                                    <div className="font-bold text-slate-800 text-sm leading-tight">
+                                        {selectedAwayTeam ? selectedAwayTeam.name : 'Away Team'}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </CardContent>
 
                         {/* Footer của thẻ: Thông tin ngày giờ */}
-                        <div className="bg-gray-50 border-t border-gray-100 p-3 text-center">
-                            <div className="flex items-center justify-center gap-4 text-xs text-gray-500 font-medium">
+                        <Separator />
+                        <CardFooter className="bg-slate-50 p-3 flex justify-center">
+                            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground font-medium">
                                 <div className="flex items-center gap-1">
-                                    📅 {matchDate ? new Date(matchDate).toLocaleDateString('vi-VN') : '--/--/----'}
+                                    <Calendar className="w-3 h-3" />
+                                    {matchDate ? new Date(matchDate).toLocaleDateString('vi-VN') : '--/--/----'}
                                 </div>
+                                <div className="h-4 w-px bg-slate-200"></div>
                                 <div className="flex items-center gap-1">
-                                    🏟️ {stadium || 'Chưa xác định sân'}
+                                    <MapPin className="w-3 h-3" />
+                                    {stadium || 'Chưa xác định sân'}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </CardFooter>
+                    </Card>
 
                     {/* Hướng dẫn nhanh */}
-                    <div className="mt-6 bg-blue-50 p-4 rounded-xl border border-blue-100 text-xs text-blue-800 space-y-2">
+                    <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 text-xs text-blue-900 space-y-2">
                         <p className="font-bold flex items-center gap-2">💡 Mẹo quản trị viên:</p>
                         <ul className="list-disc pl-4 space-y-1 opacity-80">
                             <li>Chọn đội nhà trước, sân vận động sẽ tự điền.</li>
-                            <li>Dùng nút ⇄ ở giữa để đổi sân nhà/khách nhanh.</li>
+                            <li>Dùng nút <ArrowRightLeft className="w-3 h-3 inline" /> ở giữa để đổi sân nhà/khách nhanh.</li>
                             <li>Kiểm tra kỹ ngày giờ trước khi lưu.</li>
                         </ul>
                     </div>

@@ -1,12 +1,15 @@
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contexts';
 import { AppRoutes } from './routes';
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <TooltipProvider>
+          <AppRoutes />
+        </TooltipProvider>
       </AuthProvider>
     </BrowserRouter>
   );

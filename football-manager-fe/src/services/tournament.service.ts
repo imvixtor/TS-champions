@@ -15,7 +15,7 @@ export type {
     AddTeamsRequest,
     ManualDrawRequest,
 };
-export type { TournamentStanding as Standing };
+// export type { TournamentStanding as Standing };
 
 export const tournamentService = {
     /**

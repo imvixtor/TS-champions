@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { publicService } from '../../services';
 import { Navbar } from '../../components';
 import { MatchCard, MatchDetailModal } from '../../components';
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar as CalendarIcon, FilterX } from "lucide-react"
 
 // Helper: Lấy ngày hôm nay định dạng YYYY-MM-DD
 const getTodayString = () => new Date().toISOString().split('T')[0];
@@ -13,8 +18,8 @@ export const HomePage = () => {
 
     // --- STATE CHO FILTER ---
     const [filterDate, setFilterDate] = useState(getTodayString()); // Mặc định là hôm nay
-    const [filterTourId, setFilterTourId] = useState<number | ''>(''); // Mặc định chọn tất cả
-    
+    const [filterTourId, setFilterTourId] = useState<string>("all"); // Mặc định chọn tất cả
+
     // State Modal
     const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
 
@@ -32,7 +37,7 @@ export const HomePage = () => {
             try {
                 const data = await publicService.searchMatches({
                     date: filterDate,
-                    tournamentId: filterTourId || null
+                    tournamentId: filterTourId !== "all" ? Number(filterTourId) : null
                 });
                 setMatches(data);
             } catch (err) {
@@ -47,95 +52,107 @@ export const HomePage = () => {
     }, [filterDate, filterTourId]); // Chạy lại khi Date hoặc TourId thay đổi
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-10 font-sans">
+        <div className="min-h-screen bg-muted/20 font-sans pb-10">
             <Navbar />
-            
-            <main className="container mx-auto max-w-4xl px-4 py-8 animate-fade-in-up">
-                
+
+            <main className="container mx-auto max-w-5xl px-4 py-8 animate-fade-in-up">
+
                 {/* --- HEADER & FILTER BAR --- */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-                    <h2 className="text-2xl font-black uppercase text-slate-800 mb-4 flex items-center gap-2">
-                        📅 Lịch Thi Đấu
-                    </h2>
-                    
-                    <div className="flex flex-col md:flex-row gap-4">
-                        {/* 1. Chọn Giải Đấu */}
-                        <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-400 mb-1 uppercase">Giải đấu</label>
-                            <select 
-                                className="w-full border-2 border-gray-200 rounded-xl p-3 font-bold text-slate-700 outline-none focus:border-blue-600 transition"
-                                value={filterTourId}
-                                onChange={e => setFilterTourId(e.target.value ? Number(e.target.value) : '')}
-                            >
-                                <option value="">🏆 Tất cả giải đấu</option>
-                                {tournaments.map(t => (
-                                    <option key={t.id} value={t.id}>{t.name} ({t.season})</option>
-                                ))}
-                            </select>
-                        </div>
+                <Card className="mb-8">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 uppercase text-xl">
+                            <CalendarIcon className="w-6 h-6" />
+                            Lịch Thi Đấu
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col md:flex-row gap-4">
+                            {/* 1. Chọn Giải Đấu */}
+                            <div className="flex-1 space-y-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Giải đấu
+                                </label>
+                                <Select value={filterTourId} onValueChange={setFilterTourId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Chọn giải đấu" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">🏆 Tất cả giải đấu</SelectItem>
+                                        {tournaments.map(t => (
+                                            <SelectItem key={t.id} value={String(t.id)}>
+                                                {t.name} ({t.season})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                        {/* 2. Chọn Ngày */}
-                        <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-400 mb-1 uppercase">Ngày thi đấu</label>
-                            <input 
-                                type="date" 
-                                className="w-full border-2 border-gray-200 rounded-xl p-2.5 font-bold text-slate-700 outline-none focus:border-blue-600 transition"
-                                value={filterDate}
-                                onChange={e => setFilterDate(e.target.value)}
-                            />
-                        </div>
+                            {/* 2. Chọn Ngày */}
+                            <div className="flex-1 space-y-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    Ngày thi đấu
+                                </label>
+                                <Input
+                                    type="date"
+                                    value={filterDate}
+                                    onChange={e => setFilterDate(e.target.value)}
+                                />
+                            </div>
 
-                        {/* 3. Nút "Hôm nay" nhanh */}
-                        <div className="flex items-end">
-                            <button 
-                                onClick={() => setFilterDate(getTodayString())}
-                                className="h-[46px] px-6 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-700 transition shadow-lg shadow-slate-300"
-                            >
-                                Hôm nay
-                            </button>
+                            {/* 3. Nút "Hôm nay" nhanh */}
+                            <div className="flex items-end">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setFilterDate(getTodayString())}
+                                >
+                                    Hôm nay
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
                 {/* --- KẾT QUẢ TÌM KIẾM --- */}
                 {loading ? (
-                    <div className="text-center py-20 text-gray-500 font-bold animate-pulse flex flex-col items-center">
-                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-                        Đang tìm trận đấu...
+                    <div className="py-20 flex flex-col items-center justify-center text-muted-foreground animate-pulse">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p>Đang tìm trận đấu...</p>
                     </div>
                 ) : matches.length === 0 ? (
-                    <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300 text-gray-500">
-                        <span className="text-4xl block mb-2">😴</span>
+                    <div className="text-center py-20 bg-background rounded-lg border border-dashed text-muted-foreground">
+                        <FilterX className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>Không có trận đấu nào vào ngày <b>{new Date(filterDate).toLocaleDateString('vi-VN')}</b></p>
-                        {filterTourId && <p className="text-sm">(Thuộc giải đấu bạn chọn)</p>}
+                        {filterTourId !== "all" && <p className="text-sm mt-1">(Thuộc giải đấu bạn chọn)</p>}
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center px-2 mb-2">
-                            <span className="font-bold text-slate-500 text-sm">Tìm thấy {matches.length} trận đấu</span>
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">
+                        <div className="flex justify-between items-center px-1">
+                            <span className="text-muted-foreground text-sm font-medium">Tìm thấy {matches.length} trận đấu</span>
+                            <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold">
                                 {new Date(filterDate).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })}
                             </span>
                         </div>
 
-                        {matches.map(match => (
-                            <div 
-                                key={match.id} 
-                                onClick={() => setSelectedMatchId(match.id)}
-                                className="cursor-pointer transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
-                            >
-                                <MatchCard match={match} />
-                            </div>
-                        ))}
+                        <div className="grid gap-4">
+                            {matches.map(match => (
+                                <div
+                                    key={match.id}
+                                    onClick={() => setSelectedMatchId(match.id)}
+                                    className="cursor-pointer transition-all duration-200 hover:scale-[1.01]"
+                                >
+                                    <MatchCard match={match} />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </main>
 
             {/* Modal Chi Tiết */}
             {selectedMatchId && (
-                <MatchDetailModal 
-                    matchId={selectedMatchId} 
-                    onClose={() => setSelectedMatchId(null)} 
+                <MatchDetailModal
+                    matchId={selectedMatchId}
+                    onClose={() => setSelectedMatchId(null)}
                 />
             )}
         </div>

@@ -4,9 +4,29 @@ import { Navbar } from '../../components';
 import type { TournamentBasic, StandingWithGroup } from '../../types';
 import { getImageUrl } from '../../utils';
 
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Trophy } from "lucide-react"
+
+
 export const StandingPage = () => {
     const [tournaments, setTournaments] = useState<TournamentBasic[]>([]);
-    const [selectedTourId, setSelectedTourId] = useState<number | null>(null);
+    const [selectedTourId, setSelectedTourId] = useState<string>("");
     const [standings, setStandings] = useState<StandingWithGroup[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -16,7 +36,7 @@ export const StandingPage = () => {
             .then(data => {
                 setTournaments(data);
                 // Chọn giải đấu đầu tiên làm mặc định
-                if (data.length > 0) setSelectedTourId(data[0].id);
+                if (data.length > 0) setSelectedTourId(String(data[0].id));
             })
             .catch(err => console.error("Lỗi tải giải đấu:", err));
     }, []);
@@ -24,11 +44,11 @@ export const StandingPage = () => {
     // 2. Tải BXH khi chọn giải
     useEffect(() => {
         if (!selectedTourId) return;
-        
+
         const fetchStandings = async () => {
             setLoading(true);
             try {
-                const data = await publicService.getStandings(selectedTourId);
+                const data = await publicService.getStandings(Number(selectedTourId));
                 setStandings(data);
             } catch (err) {
                 console.error("Lỗi tải BXH:", err);
@@ -37,7 +57,7 @@ export const StandingPage = () => {
                 setLoading(false);
             }
         };
-        
+
         fetchStandings();
     }, [selectedTourId]);
 
@@ -54,111 +74,105 @@ export const StandingPage = () => {
     const sortedGroupNames = Object.keys(groupedStandings).sort();
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans">
+        <div className="min-h-screen bg-muted/20 font-sans">
             <Navbar />
-            
+
             <main className="container mx-auto max-w-6xl px-4 py-8 animate-fade-in-up">
-                
+
                 {/* Header & Filter */}
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tighter">Bảng Xếp Hạng</h1>
-                        <p className="text-slate-500 font-medium">Cập nhật liên tục kết quả thi đấu.</p>
+                        <h1 className="text-3xl font-black text-primary uppercase tracking-tighter">Bảng Xếp Hạng</h1>
+                        <p className="text-muted-foreground font-medium">Cập nhật liên tục kết quả thi đấu.</p>
                     </div>
-                    
-                    <select 
-                        className="bg-white border-2 border-gray-200 text-slate-800 font-bold py-2 px-4 rounded-xl shadow-sm outline-none focus:border-blue-600 transition w-full md:w-64"
-                        onChange={(e) => setSelectedTourId(Number(e.target.value))}
-                        value={selectedTourId || ''}
-                    >
-                        {tournaments.map(t => (
-                            <option key={t.id} value={t.id}>{t.name} ({t.season})</option>
-                        ))}
-                    </select>
+
+                    <div className="w-full md:w-64">
+                        <Select value={selectedTourId} onValueChange={setSelectedTourId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Chọn giải đấu" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {tournaments.map(t => (
+                                    <SelectItem key={t.id} value={String(t.id)}>
+                                        {t.name} ({t.season})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
                 {/* Content */}
                 {loading ? (
-                    <div className="text-center py-20 text-gray-400 font-bold animate-pulse">Đang tải dữ liệu...</div>
+                    <div className="text-center py-20 text-muted-foreground font-bold animate-pulse">Đang tải dữ liệu...</div>
                 ) : standings.length === 0 ? (
-                    <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-dashed border-gray-300">
-                        <p className="text-gray-400 text-lg">Chưa có dữ liệu bảng xếp hạng cho giải đấu này.</p>
+                    <div className="text-center py-20 bg-background rounded-lg border border-dashed border-muted text-muted-foreground">
+                        <p className="text-lg">Chưa có dữ liệu bảng xếp hạng cho giải đấu này.</p>
                     </div>
                 ) : (
                     // Grid hiển thị các bảng đấu (2 cột trên màn hình lớn)
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {sortedGroupNames.map((groupName) => (
-                            <div key={groupName} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 h-fit">
-                                {/* Header Tên Bảng */}
-                                <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
-                                    <h3 className="font-bold text-lg flex items-center gap-2">
-                                        <span className="text-yellow-400 text-xl">🏆</span> {groupName}
-                                    </h3>
-                                    <span className="text-xs bg-slate-700 px-2 py-1 rounded font-mono text-gray-300">
+                            <Card key={groupName} className="overflow-hidden border-border/60 shadow-sm hover:shadow-md transition-all">
+                                <CardHeader className="bg-muted/50 py-3 px-4 flex flex-row items-center justify-between space-y-0">
+                                    <div className="font-bold text-lg flex items-center gap-2">
+                                        <Trophy className="w-5 h-5 text-yellow-500" />
+                                        {groupName}
+                                    </div>
+                                    <Badge variant="secondary" className="font-mono text-xs">
                                         {groupedStandings[groupName].length} Teams
-                                    </span>
-                                </div>
-
-                                {/* Table */}
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="bg-gray-50 text-gray-500 font-bold border-b text-xs uppercase tracking-wider">
-                                            <tr>
-                                                <th className="p-3 pl-4 w-10">#</th>
-                                                <th className="p-3">Câu lạc bộ</th>
-                                                <th className="p-3 text-center w-10" title="Played">P</th>
-                                                <th className="p-3 text-center w-10" title="Won">W</th>
-                                                <th className="p-3 text-center w-10" title="Drawn">D</th>
-                                                <th className="p-3 text-center w-10" title="Lost">L</th>
-                                                <th className="p-3 text-center w-12" title="Goal Difference">GD</th>
-                                                <th className="p-3 text-center w-12 text-slate-900 bg-gray-100">Pts</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
+                                    </Badge>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <Table>
+                                        <TableHeader className="bg-muted/20">
+                                            <TableRow className="hover:bg-transparent">
+                                                <TableHead className="w-12 text-center">#</TableHead>
+                                                <TableHead>Câu lạc bộ</TableHead>
+                                                <TableHead className="w-10 text-center text-xs">P</TableHead>
+                                                <TableHead className="w-10 text-center text-xs">W</TableHead>
+                                                <TableHead className="w-10 text-center text-xs">D</TableHead>
+                                                <TableHead className="w-10 text-center text-xs">L</TableHead>
+                                                <TableHead className="w-10 text-center text-xs">GD</TableHead>
+                                                <TableHead className="w-12 text-center font-bold text-black dark:text-white bg-muted/30">Pts</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
                                             {groupedStandings[groupName].map((team, index) => (
-                                                <tr key={team.teamId} className="group hover:bg-blue-50 transition-colors">
-                                                    {/* Vị trí (Top 2 màu xanh) */}
-                                                    <td className="p-3 pl-4">
-                                                        <span className={`flex items-center justify-center w-6 h-6 rounded font-bold text-xs 
-                                                            ${index < 2 ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                                                <TableRow key={team.teamId} className="group">
+                                                    <TableCell className="text-center p-2">
+                                                        <div className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold
+                                                             ${index < 2 ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
                                                             {index + 1}
-                                                        </span>
-                                                    </td>
-                                                    
-                                                    {/* Thông tin đội */}
-                                                    <td className="p-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <img 
-                                                                src={getImageUrl(team.teamLogo)} 
-                                                                className="w-8 h-8 object-contain transition-transform group-hover:scale-110"
-                                                                alt={team.teamName}
-                                                                onError={(e)=>e.currentTarget.src='https://placehold.co/20'}
-                                                            />
-                                                            <span className="font-bold text-slate-700">{team.teamName}</span>
                                                         </div>
-                                                    </td>
-
-                                                    {/* Chỉ số */}
-                                                    <td className="p-3 text-center font-medium text-gray-600">{team.played}</td>
-                                                    <td className="p-3 text-center text-gray-500">{team.won}</td>
-                                                    <td className="p-3 text-center text-gray-500">{team.drawn}</td>
-                                                    <td className="p-3 text-center text-gray-500">{team.lost}</td>
-                                                    
-                                                    {/* Hiệu số bàn thắng */}
-                                                    <td className={`p-3 text-center font-bold ${team.gd > 0 ? 'text-green-600' : team.gd < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                                                    </TableCell>
+                                                    <TableCell className="p-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <img
+                                                                src={getImageUrl(team.teamLogo)}
+                                                                className="w-6 h-6 object-contain"
+                                                                alt={team.teamName}
+                                                                onError={(e) => e.currentTarget.src = 'https://placehold.co/20'}
+                                                            />
+                                                            <span className="font-semibold text-sm">{team.teamName}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center p-2 text-muted-foreground">{team.played}</TableCell>
+                                                    <TableCell className="text-center p-2 text-muted-foreground">{team.won}</TableCell>
+                                                    <TableCell className="text-center p-2 text-muted-foreground">{team.drawn}</TableCell>
+                                                    <TableCell className="text-center p-2 text-muted-foreground">{team.lost}</TableCell>
+                                                    <TableCell className={`text-center p-2 font-bold ${team.gd > 0 ? 'text-green-600' : team.gd < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
                                                         {team.gd > 0 ? `+${team.gd}` : team.gd}
-                                                    </td>
-                                                    
-                                                    {/* Điểm số */}
-                                                    <td className="p-3 text-center font-black text-slate-800 text-base bg-gray-50 group-hover:bg-blue-100 transition-colors">
+                                                    </TableCell>
+                                                    <TableCell className="text-center p-2 font-black text-base bg-muted/30">
                                                         {team.points}
-                                                    </td>
-                                                </tr>
+                                                    </TableCell>
+                                                </TableRow>
                                             ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
                 )}

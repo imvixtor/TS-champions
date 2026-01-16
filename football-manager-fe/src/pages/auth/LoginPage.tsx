@@ -5,10 +5,24 @@ import { authService } from '../../services';
 import { useAuth } from '../../hooks';
 import type { DecodedToken } from '../../types';
 
+import { Button } from "@/components/ui/button"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Loader2, AlertCircle } from 'lucide-react'
+
+
 export const LoginPage = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    
+
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -23,13 +37,13 @@ export const LoginPage = () => {
         try {
             // 1. Gọi API đăng nhập
             const res = await authService.login({ username, password });
-            const token = res.jwtToken; 
+            const token = res.jwtToken;
 
             if (!token) throw new Error("Không nhận được token từ server!");
 
             // 2. Giải mã Token để lấy thông tin (Role, TeamID)
             const decoded: DecodedToken = jwtDecode(token);
-            
+
             console.log("Login Success - Decoded Token:", decoded);
 
             // 3. Lưu thông tin vào Context & LocalStorage
@@ -51,7 +65,7 @@ export const LoginPage = () => {
 
         } catch (err: any) {
             console.error("Login Error:", err);
-            
+
             // Xử lý thông báo lỗi chi tiết
             if (err.response) {
                 if (err.response.status === 403) {
@@ -70,59 +84,61 @@ export const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4 animate-fade-in">
-            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-extrabold text-blue-900 uppercase tracking-tight">Football Manager</h2>
-                    <p className="text-gray-500 mt-2 font-medium">Đăng nhập hệ thống quản lý</p>
-                </div>
-
-                {/* Hiển thị lỗi màu đỏ nếu có */}
-                {error && (
-                    <div className="bg-red-50 text-red-600 border border-red-200 p-3 rounded-lg mb-6 text-sm font-bold text-center flex items-center justify-center gap-2">
-                        <span>⚠️</span> {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleLogin} className="space-y-5">
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">Tài khoản</label>
-                        <input 
-                            type="text" 
-                            className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-600 focus:outline-none transition font-medium text-slate-700"
-                            placeholder="Nhập username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">Mật khẩu</label>
-                        <input 
-                            type="password" 
-                            className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-600 focus:outline-none transition font-medium text-slate-700"
-                            placeholder="Nhập mật khẩu"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                    
-                    <button 
-                        disabled={loading}
-                        className="w-full bg-blue-700 text-white py-3 rounded-lg font-bold hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition shadow-lg shadow-blue-200 mt-4"
-                    >
-                        {loading ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                Đang xử lý...
-                            </span>
-                        ) : 'ĐĂNG NHẬP'}
-                    </button>
-                </form>
-
-                <div className="mt-6 text-center text-sm text-gray-400">
-                    © 2024 Football Champions League
-                </div>
-            </div>
+        <div className="min-h-screen flex items-center justify-center bg-muted/40 px-4">
+            <Card className="w-full max-w-sm">
+                <CardHeader className="text-center">
+                    <CardTitle className="text-2xl font-bold text-primary">Football Manager</CardTitle>
+                    <CardDescription>
+                        Đăng nhập để vào hệ thống quản lý
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleLogin} className="grid gap-4">
+                        {error && (
+                            <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md flex items-center gap-2 font-medium">
+                                <AlertCircle className="h-4 w-4" />
+                                {error}
+                            </div>
+                        )}
+                        <div className="grid gap-2">
+                            <Label htmlFor="username">Tài khoản</Label>
+                            <Input
+                                id="username"
+                                type="text"
+                                placeholder="username"
+                                required
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">Mật khẩu</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={loading}>
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Đang xử lý...
+                                </>
+                            ) : (
+                                "Đăng nhập"
+                            )}
+                        </Button>
+                    </form>
+                </CardContent>
+                <CardFooter className="justify-center">
+                    <p className="text-xs text-muted-foreground">
+                        © 2024 Football Champions League
+                    </p>
+                </CardFooter>
+            </Card>
         </div>
     );
 };

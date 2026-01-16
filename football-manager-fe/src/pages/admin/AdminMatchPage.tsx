@@ -4,20 +4,51 @@ import { matchService, tournamentService, playerService } from '../../services';
 import type { TournamentBasic, Match } from '../../types';
 import { getImageUrl } from '../../utils';
 
+import { Button } from "@/components/ui/button"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import { Loader2, Calendar, MapPin } from "lucide-react"
+
 export const AdminMatchPage = () => {
     const navigate = useNavigate();
     const [tournaments, setTournaments] = useState<TournamentBasic[]>([]);
-    const [selectedTourId, setSelectedTourId] = useState<number | null>(null);
+    const [selectedTourId, setSelectedTourId] = useState<string>("");
     const [matches, setMatches] = useState<Match[]>([]);
     const [loading, setLoading] = useState(false);
-    const [filterGroup, setFilterGroup] = useState<string>(''); 
+    const [filterGroup, setFilterGroup] = useState<string>('all');
 
     // State Modal Sửa Trận Đấu
     const [editingMatch, setEditingMatch] = useState<Match | null>(null);
     const [editForm, setEditForm] = useState({ matchDate: '', stadium: '' });
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
 
     // --- MỚI: State Modal Xem Đội Hình ---
-    const [showSquadModal, setShowSquadModal] = useState(false);
+    const [squadDialogOpen, setSquadDialogOpen] = useState(false);
     const [selectedTeamName, setSelectedTeamName] = useState('');
     const [teamPlayers, setTeamPlayers] = useState<any[]>([]);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
@@ -25,7 +56,7 @@ export const AdminMatchPage = () => {
     useEffect(() => {
         tournamentService.getAllTournaments().then(data => {
             setTournaments(data);
-            if (data.length > 0) setSelectedTourId(data[0].id);
+            if (data.length > 0) setSelectedTourId(String(data[0].id));
         });
     }, []);
 
@@ -37,7 +68,10 @@ export const AdminMatchPage = () => {
         if (!selectedTourId) return;
         setLoading(true);
         try {
-            const data = await matchService.getMatchesByTournament(selectedTourId, filterGroup || undefined);
+            const data = await matchService.getMatchesByTournament(
+                Number(selectedTourId),
+                filterGroup !== 'all' ? filterGroup : undefined
+            );
             setMatches(data);
         } catch (e) { console.error(e); } finally { setLoading(false); }
     };
@@ -45,10 +79,19 @@ export const AdminMatchPage = () => {
     const handleGenerateSchedule = async () => {
         if (!selectedTourId || !confirm("Sinh lịch thi đấu tự động?")) return;
         try {
-            await matchService.generateSchedule(selectedTourId);
+            await matchService.generateSchedule(Number(selectedTourId));
             alert("✅ Đã sinh lịch thành công!");
             fetchMatches();
         } catch (error) { console.error(error); alert("❌ Lỗi sinh lịch!"); }
+    };
+
+    const openEditModal = (match: Match) => {
+        setEditingMatch(match);
+        setEditForm({
+            matchDate: match.matchDate,
+            stadium: match.stadium || ''
+        });
+        setEditDialogOpen(true);
     };
 
     const handleSaveUpdate = async () => {
@@ -60,6 +103,7 @@ export const AdminMatchPage = () => {
                 status: editingMatch.status
             });
             alert("✅ Cập nhật thành công!");
+            setEditDialogOpen(false);
             setEditingMatch(null);
             fetchMatches();
         } catch (e) { console.error(e); alert("❌ Lỗi cập nhật"); }
@@ -69,16 +113,15 @@ export const AdminMatchPage = () => {
     const handleViewTeam = async (teamId: number, teamName: string) => {
         if (!teamId) return;
         setSelectedTeamName(teamName);
-        setShowSquadModal(true);
+        setSquadDialogOpen(true);
         setLoadingPlayers(true);
         setTeamPlayers([]); // Clear dữ liệu cũ
-        
+
         try {
             const data = await playerService.getPlayersByTeam(teamId);
             setTeamPlayers(data);
         } catch (error) {
             console.error(error);
-            alert("❌ Không thể tải danh sách cầu thủ.");
         } finally {
             setLoadingPlayers(false);
         }
@@ -99,175 +142,265 @@ export const AdminMatchPage = () => {
     });
 
     return (
-        <div className="space-y-6 animate-fade-in-up pb-10">
+        <div className="space-y-6 animate-fade-in-up pb-10 max-w-7xl mx-auto p-4">
+
             {/* Header & Filter */}
-            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <h2 className="text-2xl font-bold text-slate-800">📅 QUẢN LÝ LỊCH THI ĐẤU</h2>
-                    <div className="flex gap-3">
-                        <select className="border p-2 rounded" value={selectedTourId || ''} onChange={e => setSelectedTourId(Number(e.target.value))}>
-                            {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                        </select>
-                        <button onClick={handleGenerateSchedule} className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">⚡ Sinh Lịch</button>
-                    </div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Quản Lý Lịch Thi Đấu</h2>
+                    <p className="text-muted-foreground">Xem, sắp xếp và quản lý các trận đấu trong giải.</p>
                 </div>
-                <div className="mt-4 flex gap-2 overflow-x-auto">
-                    <button onClick={() => setFilterGroup('')} className={`px-4 py-1 rounded-full text-sm border ${filterGroup===''?'bg-slate-800 text-white':'bg-white'}`}>Tất cả</button>
-                    {['Group A','Group B','Group C','Group D'].map(g => (
-                        <button key={g} onClick={() => setFilterGroup(g)} className={`px-4 py-1 rounded-full text-sm border ${filterGroup===g?'bg-blue-600 text-white':'bg-white'}`}>{g}</button>
-                    ))}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <Select value={selectedTourId} onValueChange={setSelectedTourId}>
+                        <SelectTrigger className="w-[280px]">
+                            <SelectValue placeholder="Chọn giải đấu" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {tournaments.map(t => (
+                                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={handleGenerateSchedule}>
+                        ⚡ Sinh Lịch
+                    </Button>
                 </div>
             </div>
 
+            {/* Filter Group */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                <Button
+                    variant={filterGroup === 'all' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFilterGroup('all')}
+                    className="rounded-full"
+                >
+                    Tất cả
+                </Button>
+                {['Group A', 'Group B', 'Group C', 'Group D'].map(g => (
+                    <Button
+                        key={g}
+                        variant={filterGroup === g ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setFilterGroup(g)}
+                        className="rounded-full"
+                    >
+                        {g}
+                    </Button>
+                ))}
+            </div>
+
             {/* Danh sách trận đấu */}
-            {loading ? <div className="text-center py-10">Đang tải...</div> : (
+            {loading ? (
+                <div className="flex justify-center py-20">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                </div>
+            ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {sortedRounds.map(round => (
-                        <div key={round} className="bg-white border rounded-xl overflow-hidden shadow-sm h-fit">
-                            <div className="bg-slate-100 p-3 font-bold text-slate-700 border-b flex justify-between">
-                                <span>{round}</span>
-                                <span className="text-xs bg-white border px-2 py-0.5 rounded text-gray-500">{matchesByRound[round].length} trận</span>
-                            </div>
-                            <div className="divide-y divide-gray-100">
-                                {matchesByRound[round].map(match => (
-                                    <div key={match.id} className="p-4 hover:bg-blue-50 transition relative group">
-                                        <div className="absolute top-2 right-2">
-                                            {match.status === 'SCHEDULED' && <span className="text-[10px] bg-gray-200 px-2 py-0.5 rounded-full">SẮP ĐÁ</span>}
-                                            {match.status === 'IN_PROGRESS' && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full animate-pulse">● LIVE</span>}
-                                            {match.status === 'FINISHED' && <span className="text-[10px] bg-slate-800 text-white px-2 py-0.5 rounded-full">FT</span>}
-                                        </div>
-                                        <div className="text-xs text-gray-500 mb-2 flex gap-2">
-                                            <span className="font-mono text-blue-600 bg-blue-50 px-1 rounded">{new Date(match.matchDate).toLocaleString('vi-VN')}</span>
-                                            <span>• {match.stadium || 'Chưa có sân'} • <b className="text-orange-600">{match.groupName}</b></span>
-                                        </div>
-                                        <div className="flex justify-between items-center mb-3">
-                                            {/* ĐỘI NHÀ (Clickable) */}
-                                            <div 
-                                                className="flex items-center gap-2 w-1/3 cursor-pointer hover:opacity-80 transition p-1 rounded hover:bg-gray-100"
-                                                onClick={() => handleViewTeam(match.homeTeamId, match.homeTeam)}
-                                                title="Xem đội hình"
-                                            >
-                                                <img src={getImageUrl(match.homeLogo)} className="w-6 h-6 object-contain"/>
-                                                <span className="font-bold text-sm hover:text-blue-600 hover:underline">{match.homeTeam}</span>
+                        <Card key={round} className="overflow-hidden">
+                            <CardHeader className="bg-muted/40 py-3">
+                                <div className="flex justify-between items-center">
+                                    <div className="font-bold text-lg">{round}</div>
+                                    <Badge variant="outline" className="bg-background">{matchesByRound[round].length} trận</Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <div className="divide-y">
+                                    {matchesByRound[round].map(match => (
+                                        <div key={match.id} className="p-4 hover:bg-muted/30 transition relative group">
+                                            {/* Status Labels - Top Right */}
+                                            <div className="absolute top-4 right-4 flex gap-2">
+                                                {match.status === 'SCHEDULED' && <Badge variant="secondary" className="text-[10px] h-5">SẮP ĐÁ</Badge>}
+                                                {match.status === 'IN_PROGRESS' && <Badge variant="destructive" className="text-[10px] h-5 animate-pulse">● LIVE</Badge>}
+                                                {match.status === 'FINISHED' && <Badge className="text-[10px] h-5 bg-slate-800">FT</Badge>}
                                             </div>
 
-                                            <div className="font-bold text-lg bg-gray-100 px-3 py-1 rounded">{match.status==='SCHEDULED'?'VS':`${match.homeScore} - ${match.awayScore}`}</div>
+                                            {/* Meta Info */}
+                                            <div className="text-xs text-muted-foreground mb-3 flex flex-wrap gap-2 items-center">
+                                                <Badge variant="outline" className="text-xs font-normal bg-blue-50 text-blue-700 border-blue-200 gap-1">
+                                                    <Calendar className="w-3 h-3" />
+                                                    {new Date(match.matchDate).toLocaleString('vi-VN')}
+                                                </Badge>
+                                                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {match.stadium || 'Chưa có sân'}</span>
+                                                <span className="font-bold text-orange-600">• {match.groupName}</span>
+                                            </div>
 
-                                            {/* ĐỘI KHÁCH (Clickable) */}
-                                            <div 
-                                                className="flex items-center gap-2 w-1/3 justify-end cursor-pointer hover:opacity-80 transition p-1 rounded hover:bg-gray-100"
-                                                onClick={() => handleViewTeam(match.awayTeamId, match.awayTeam)}
-                                                title="Xem đội hình"
-                                            >
-                                                <span className="font-bold text-sm text-right hover:text-blue-600 hover:underline">{match.awayTeam}</span>
-                                                <img src={getImageUrl(match.awayLogo)} className="w-6 h-6 object-contain"/>
+                                            {/* Match Content */}
+                                            <div className="flex justify-between items-center mb-4 mt-2">
+                                                {/* Left Team */}
+                                                <div
+                                                    className="flex items-center gap-3 w-1/3 cursor-pointer p-1 rounded-md hover:bg-muted transition"
+                                                    onClick={() => handleViewTeam(match.homeTeamId, match.homeTeam)}
+                                                    title="Xem đội hình"
+                                                >
+                                                    <img
+                                                        src={getImageUrl(match.homeLogo)}
+                                                        className="w-8 h-8 object-contain"
+                                                        alt={match.homeTeam}
+                                                        onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
+                                                    />
+                                                    <span className="font-bold text-sm leading-tight hover:text-primary hover:underline">{match.homeTeam}</span>
+                                                </div>
+
+                                                {/* Score / VS */}
+                                                <div className="font-black text-xl bg-muted/50 px-4 py-1.5 rounded-md min-w-[80px] text-center tracking-widest">
+                                                    {match.status === 'SCHEDULED' ? 'VS' : `${match.homeScore} - ${match.awayScore}`}
+                                                </div>
+
+                                                {/* Right Team */}
+                                                <div
+                                                    className="flex items-center justify-end gap-3 w-1/3 cursor-pointer p-1 rounded-md hover:bg-muted transition"
+                                                    onClick={() => handleViewTeam(match.awayTeamId, match.awayTeam)}
+                                                    title="Xem đội hình"
+                                                >
+                                                    <span className="font-bold text-sm leading-tight text-right hover:text-primary hover:underline">{match.awayTeam}</span>
+                                                    <img
+                                                        src={getImageUrl(match.awayLogo)}
+                                                        className="w-8 h-8 object-contain"
+                                                        alt={match.awayTeam}
+                                                        onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex justify-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs"
+                                                    onClick={() => openEditModal(match)}
+                                                >
+                                                    ✏️ Sửa Giờ
+                                                </Button>
+
+                                                {match.status !== 'FINISHED' && (
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                                                        onClick={() => navigate(`/admin/match/${match.id}/console`)}
+                                                    >
+                                                        💻 Vào Console
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
-                                        
-                                        {/* Action Buttons */}
-                                        <div className="flex justify-center gap-2 mt-2">
-                                            <button onClick={() => { setEditingMatch(match); setEditForm({ matchDate: match.matchDate, stadium: match.stadium || '' }) }} 
-                                                className="text-xs border px-3 py-1 rounded hover:bg-gray-100">✏️ Sửa Giờ</button>
-                                            
-                                            {match.status !== 'FINISHED' && (
-                                                <button onClick={() => navigate(`/admin/match/${match.id}/console`)} 
-                                                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 shadow-sm flex items-center gap-1">
-                                                    💻 Vào Console
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
                     ))}
                 </div>
             )}
 
             {/* Modal Sửa Trận Đấu */}
-            {editingMatch && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-white p-6 rounded-xl w-96 shadow-2xl">
-                        <h3 className="font-bold text-lg mb-4">Cập nhật trận đấu</h3>
-                        <div className="space-y-3">
-                            <input type="datetime-local" className="w-full border p-2 rounded" value={editForm.matchDate} onChange={e => setEditForm({...editForm, matchDate: e.target.value})} />
-                            <input type="text" className="w-full border p-2 rounded" placeholder="Sân vận động..." value={editForm.stadium} onChange={e => setEditForm({...editForm, stadium: e.target.value})} />
-                            <div className="flex justify-end gap-2 mt-4">
-                                <button onClick={() => setEditingMatch(null)} className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 font-bold text-sm">Hủy</button>
-                                <button onClick={handleSaveUpdate} className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold text-sm">Lưu</button>
-                            </div>
+            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Cập nhật trận đấu</DialogTitle>
+                        <DialogDescription>
+                            Chỉnh sửa thời gian và địa điểm thi đấu.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="date" className="text-right">
+                                Thời gian
+                            </Label>
+                            <Input
+                                id="date"
+                                type="datetime-local"
+                                className="col-span-3"
+                                value={editForm.matchDate}
+                                onChange={e => setEditForm({ ...editForm, matchDate: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="stadium" className="text-right">
+                                Sân đấu
+                            </Label>
+                            <Input
+                                id="stadium"
+                                placeholder="Nhập tên sân..."
+                                className="col-span-3"
+                                value={editForm.stadium}
+                                onChange={e => setEditForm({ ...editForm, stadium: e.target.value })}
+                            />
                         </div>
                     </div>
-                </div>
-            )}
+                    <DialogFooter>
+                        <Button type="submit" onClick={handleSaveUpdate}>Lưu thay đổi</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
-            {/* --- MỚI: Modal Xem Đội Hình (Squad) --- */}
-            {showSquadModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh]">
-                        {/* Header Modal */}
-                        <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
-                            <h3 className="font-bold text-lg flex items-center gap-2">
-                                🏃 Đội hình: <span className="text-yellow-400 uppercase">{selectedTeamName}</span>
-                            </h3>
-                            <button onClick={() => setShowSquadModal(false)} className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition">✕</button>
-                        </div>
-                        
-                        {/* Body Modal (Scrollable) */}
-                        <div className="p-0 overflow-y-auto flex-1 bg-gray-50">
-                            {loadingPlayers ? (
-                                <div className="p-10 text-center text-gray-500 flex flex-col items-center gap-2">
-                                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                    <span>Đang tải danh sách cầu thủ...</span>
-                                </div>
-                            ) : teamPlayers.length === 0 ? (
-                                <div className="p-10 text-center text-gray-400 italic">Đội này chưa có cầu thủ nào.</div>
-                            ) : (
-                                <table className="w-full text-left border-collapse">
-                                    <thead className="bg-gray-200 text-xs font-bold uppercase text-gray-600 sticky top-0 shadow-sm z-10">
-                                        <tr>
-                                            <th className="p-3 text-center w-16">Số áo</th>
-                                            <th className="p-3">Họ tên & Quốc tịch</th>
-                                            <th className="p-3 text-center w-24">Vị trí</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 bg-white text-sm">
-                                        {teamPlayers.map(p => (
-                                            <tr key={p.id} className="hover:bg-blue-50 transition">
-                                                <td className="p-3 text-center font-black text-slate-300 text-xl group-hover:text-blue-600">
-                                                    #{p.shirtNumber}
-                                                </td>
-                                                <td className="p-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <img src={getImageUrl(p.avatar)} className="w-10 h-10 rounded-full object-cover border border-gray-100 shadow-sm" />
-                                                        <div>
-                                                            <div className="font-bold text-slate-800">{p.name}</div>
-                                                            <div className="text-xs text-gray-400">{p.nationality || 'N/A'}</div>
-                                                        </div>
+            {/* Modal Xem Đội Hình */}
+            <Dialog open={squadDialogOpen} onOpenChange={setSquadDialogOpen}>
+                <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col p-0 overflow-hidden">
+                    <DialogHeader className="p-6 pb-2">
+                        <DialogTitle className="flex items-center gap-2">
+                            🏃 Đội hình: <span className="text-primary uppercase">{selectedTeamName}</span>
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="overflow-y-auto flex-1 p-6 pt-2">
+                        {loadingPlayers ? (
+                            <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
+                                <Loader2 className="w-8 h-8 animate-spin" />
+                                <span>Đang tải danh sách...</span>
+                            </div>
+                        ) : teamPlayers.length === 0 ? (
+                            <div className="text-center py-10 text-muted-foreground">
+                                Đội này chưa có cầu thủ nào.
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[80px] text-center">Số áo</TableHead>
+                                        <TableHead>Cầu thủ</TableHead>
+                                        <TableHead className="text-center">Vị trí</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {teamPlayers.map((p) => (
+                                        <TableRow key={p.id}>
+                                            <TableCell className="text-center font-bold text-lg text-muted-foreground">
+                                                #{p.shirtNumber}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={getImageUrl(p.avatar)}
+                                                        className="w-10 h-10 rounded-full object-cover border"
+                                                        alt={p.name}
+                                                        onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
+                                                    />
+                                                    <div>
+                                                        <div className="font-bold">{p.name}</div>
+                                                        <div className="text-xs text-muted-foreground">{p.nationality || 'N/A'}</div>
                                                     </div>
-                                                </td>
-                                                <td className="p-3 text-center">
-                                                    <span className={`text-[10px] font-bold px-2 py-1 rounded border
-                                                        ${p.position === 'GK' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
-                                                          p.position === 'FW' ? 'bg-red-50 text-red-700 border-red-200' : 
-                                                          p.position === 'MF' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                                                        {p.position}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-                        
-                        {/* Footer Modal */}
-                        <div className="p-3 border-t bg-white text-right shrink-0">
-                            <button onClick={() => setShowSquadModal(false)} className="px-5 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition">Đóng</button>
-                        </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant="outline" className={`
+                                                    ${p.position === 'GK' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                                        p.position === 'FW' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                            p.position === 'MF' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}
+                                                 `}>
+                                                    {p.position}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
                     </div>
-                </div>
-            )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
