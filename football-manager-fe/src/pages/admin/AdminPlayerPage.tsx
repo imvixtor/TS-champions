@@ -23,6 +23,14 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { Loader2, Trash2, UserPlus } from "lucide-react"
 
 export const AdminPlayerPage = () => {
@@ -38,6 +46,7 @@ export const AdminPlayerPage = () => {
     const [players, setPlayers] = useState<Player[]>([]); // List cầu thủ của đội đó
     const [loading, setLoading] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
     // 1. Load danh sách Đội bóng (để bỏ vào Dropdown)
     useEffect(() => {
@@ -91,11 +100,12 @@ export const AdminPlayerPage = () => {
             const fileInput = document.getElementById('avatarInput') as HTMLInputElement;
             if (fileInput) fileInput.value = '';
 
+            setIsFormModalOpen(false); // Đóng modal
             fetchPlayers(selectedTeamId); // Load lại danh sách ngay
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Lỗi thêm:", error);
-            if (error?.response?.status === 403) {
+            if ((error as { response?: { status?: number } })?.response?.status === 403) {
                 alert("❌ Lỗi quyền hạn (403). Hãy logout và login lại!");
             } else {
                 alert("❌ Lỗi thêm cầu thủ! Kiểm tra console.");
@@ -120,78 +130,34 @@ export const AdminPlayerPage = () => {
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+        <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
 
-            {/* CỘT TRÁI: FORM THÊM CẦU THỦ */}
-            <div className="md:col-span-4 md:sticky md:top-6 h-fit">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <UserPlus className="w-5 h-5" /> Thêm Cầu Thủ
-                        </CardTitle>
-                        <CardDescription>
-                            Tạo hồ sơ cầu thủ mới cho đội bóng.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleCreatePlayer} className="space-y-4">
-                            {/* Chọn đội để thêm vào */}
-                            <div className="space-y-2">
-                                <Label>Chọn Đội Bóng</Label>
-                                <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Chọn đội..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {teams.map(t => (
-                                            <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Tên Cầu Thủ</Label>
-                                <Input required value={name} onChange={e => setName(e.target.value)} placeholder="Nguyễn Văn A" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Số Áo</Label>
-                                    <Input type="number" required value={shirtNumber} onChange={e => setShirtNumber(e.target.value)} placeholder="10" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Vị Trí</Label>
-                                    <Select value={position} onValueChange={setPosition}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="GK">Thủ môn</SelectItem>
-                                            <SelectItem value="DF">Hậu vệ</SelectItem>
-                                            <SelectItem value="MF">Tiền vệ</SelectItem>
-                                            <SelectItem value="FW">Tiền đạo</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Avatar</Label>
-                                <Input id="avatarInput" type="file" accept="image/*" onChange={e => setAvatar(e.target.files ? e.target.files[0] : null)} className="cursor-pointer" />
-                            </div>
-
-                            <Button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-700">
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                Lưu Cầu Thủ
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+            {/* HEADER VÀ NÚT THÊM MỚI */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Quản Lý Cầu Thủ</h2>
+                    <p className="text-muted-foreground">Xem và quản lý danh sách cầu thủ theo đội bóng.</p>
+                </div>
+                <div className="flex gap-3">
+                    <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                        <SelectTrigger className="w-[280px]">
+                            <SelectValue placeholder="Chọn đội..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {teams.map(t => (
+                                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={() => setIsFormModalOpen(true)} className="bg-green-600 hover:bg-green-700">
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Thêm Cầu Thủ
+                    </Button>
+                </div>
             </div>
 
-            {/* CỘT PHẢI: DANH SÁCH CẦU THỦ */}
-            <div className="md:col-span-8">
+            {/* DANH SÁCH CẦU THỦ */}
+            <div>
                 <Card className="h-full">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <div className="space-y-1">
@@ -270,6 +236,77 @@ export const AdminPlayerPage = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* MODAL THÊM CẦU THỦ */}
+            <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <UserPlus className="w-5 h-5" /> Thêm Cầu Thủ
+                        </DialogTitle>
+                        <DialogDescription>
+                            Tạo hồ sơ cầu thủ mới cho đội bóng.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleCreatePlayer} className="space-y-4">
+                        {/* Chọn đội để thêm vào */}
+                        <div className="space-y-2">
+                            <Label>Chọn Đội Bóng</Label>
+                            <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Chọn đội..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {teams.map(t => (
+                                        <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Tên Cầu Thủ</Label>
+                            <Input required value={name} onChange={e => setName(e.target.value)} placeholder="Nguyễn Văn A" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Số Áo</Label>
+                                <Input type="number" required value={shirtNumber} onChange={e => setShirtNumber(e.target.value)} placeholder="10" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Vị Trí</Label>
+                                <Select value={position} onValueChange={setPosition}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="GK">Thủ môn</SelectItem>
+                                        <SelectItem value="DF">Hậu vệ</SelectItem>
+                                        <SelectItem value="MF">Tiền vệ</SelectItem>
+                                        <SelectItem value="FW">Tiền đạo</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Avatar</Label>
+                            <Input id="avatarInput" type="file" accept="image/*" onChange={e => setAvatar(e.target.files ? e.target.files[0] : null)} className="cursor-pointer" />
+                        </div>
+
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsFormModalOpen(false)}>
+                                Hủy
+                            </Button>
+                            <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700">
+                                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                Lưu Cầu Thủ
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

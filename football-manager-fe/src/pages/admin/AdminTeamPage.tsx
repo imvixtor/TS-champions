@@ -36,6 +36,7 @@ export const AdminTeamPage = () => {
     const [teams, setTeams] = useState<any[]>([]);
     const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
     // State Modal Xem Cầu Thủ
     const [showPlayerModal, setShowPlayerModal] = useState(false);
@@ -94,6 +95,7 @@ export const AdminTeamPage = () => {
                 alert("✅ Tạo đội mới thành công!");
             }
             handleCancelEdit();
+            setIsFormModalOpen(false);
             fetchTeams();
         } catch (error) {
             console.error(error);
@@ -123,7 +125,7 @@ export const AdminTeamPage = () => {
         setStadium(team.stadium);
         setCoachName(team.coachName || '');
         setLogo(null);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setIsFormModalOpen(true);
     };
 
     const handleCancelEdit = () => {
@@ -131,6 +133,7 @@ export const AdminTeamPage = () => {
         setName(''); setShortName(''); setStadium(''); setCoachName(''); setLogo(null);
         const fileInput = document.getElementById('logoInput') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
+        setIsFormModalOpen(false);
     };
 
     const handleOpenCoachModal = (team: any) => {
@@ -159,63 +162,25 @@ export const AdminTeamPage = () => {
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative p-6 max-w-[1600px] mx-auto animate-fade-in-up">
+        <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
 
-            {/* --- CỘT TRÁI: FORM --- */}
-            <div className="lg:col-span-4 lg:sticky lg:top-6 h-fit">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            {editingTeamId ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                            {editingTeamId ? 'Sửa Đội Bóng' : 'Thêm Đội Mới'}
-                        </CardTitle>
-                        <CardDescription>
-                            Nhập thông tin chi tiết về đội bóng của bạn.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Tên Đội</Label>
-                                <Input required value={name} onChange={e => setName(e.target.value)} placeholder="VD: Liverpool FC" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Mã (Short)</Label>
-                                    <Input required value={shortName} onChange={e => setShortName(e.target.value)} placeholder="LIV" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>HLV Trưởng</Label>
-                                    <Input value={coachName} onChange={e => setCoachName(e.target.value)} placeholder="Arne Slot" />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Sân Vận Động</Label>
-                                <Input required value={stadium} onChange={e => setStadium(e.target.value)} placeholder="Anfield" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Logo CLB</Label>
-                                <Input id="logoInput" type="file" accept="image/*" onChange={e => setLogo(e.target.files ? e.target.files[0] : null)} className="cursor-pointer" />
-                            </div>
-
-                            <div className="flex gap-2 pt-2">
-                                {editingTeamId && (
-                                    <Button type="button" variant="outline" className="flex-1" onClick={handleCancelEdit}>
-                                        Hủy
-                                    </Button>
-                                )}
-                                <Button type="submit" disabled={loading} className="flex-1">
-                                    {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                    {editingTeamId ? 'Cập Nhật' : 'Thêm Mới'}
-                                </Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+            {/* HEADER VÀ NÚT THÊM MỚI */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Quản Lý Đội Bóng</h2>
+                    <p className="text-muted-foreground">Quản lý tất cả các đội bóng trong hệ thống.</p>
+                </div>
+                <Button onClick={() => {
+                    handleCancelEdit();
+                    setIsFormModalOpen(true);
+                }} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Thêm Đội Mới
+                </Button>
             </div>
 
-            {/* --- CỘT PHẢI: DANH SÁCH --- */}
-            <div className="lg:col-span-8">
+            {/* DANH SÁCH ĐỘI BÓNG */}
+            <div>
                 <Card>
                     <CardHeader>
                         <CardTitle>Danh Sách Đội Bóng</CardTitle>
@@ -350,6 +315,58 @@ export const AdminTeamPage = () => {
                         <Button variant="outline" onClick={() => setShowCoachModal(false)}>Hủy</Button>
                         <Button onClick={handleCreateCoach}>Xác nhận</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* MODAL THÊM/SỬA ĐỘI BÓNG */}
+            <Dialog open={isFormModalOpen} onOpenChange={(open) => {
+                setIsFormModalOpen(open);
+                if (!open) handleCancelEdit();
+            }}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            {editingTeamId ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                            {editingTeamId ? 'Sửa Đội Bóng' : 'Thêm Đội Mới'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Nhập thông tin chi tiết về đội bóng của bạn.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Tên Đội</Label>
+                            <Input required value={name} onChange={e => setName(e.target.value)} placeholder="VD: Liverpool FC" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Mã (Short)</Label>
+                                <Input required value={shortName} onChange={e => setShortName(e.target.value)} placeholder="LIV" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>HLV Trưởng</Label>
+                                <Input value={coachName} onChange={e => setCoachName(e.target.value)} placeholder="Arne Slot" />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Sân Vận Động</Label>
+                            <Input required value={stadium} onChange={e => setStadium(e.target.value)} placeholder="Anfield" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Logo CLB</Label>
+                            <Input id="logoInput" type="file" accept="image/*" onChange={e => setLogo(e.target.files ? e.target.files[0] : null)} className="cursor-pointer" />
+                        </div>
+
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                                Hủy
+                            </Button>
+                            <Button type="submit" disabled={loading}>
+                                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                {editingTeamId ? 'Cập Nhật' : 'Thêm Mới'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
 

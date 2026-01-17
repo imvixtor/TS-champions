@@ -26,6 +26,14 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 import {
     Loader2,
@@ -55,6 +63,7 @@ export const AdminTournamentPage = () => {
     // --- FORM INPUTS (DÙNG CHUNG CHO TẠO VÀ SỬA) ---
     const [form, setForm] = useState({ name: '', season: '', startDate: '', endDate: '' });
     const [editingId, setEditingId] = useState<number | null>(null); // ID giải đang sửa (null = mode tạo)
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
     // --- STATE CHO CHỨC NĂNG CHI TIẾT ---
     const [selectedTeamIds, setSelectedTeamIds] = useState<number[]>([]); // Đội được tích chọn để thêm
@@ -110,6 +119,7 @@ export const AdminTournamentPage = () => {
                 alert("✅ Tạo giải đấu thành công!");
                 setForm({ name: '', season: '', startDate: '', endDate: '' });
             }
+            setIsFormModalOpen(false);
             fetchTournaments();
         } catch (error) {
             console.error(error);
@@ -129,14 +139,14 @@ export const AdminTournamentPage = () => {
             startDate: tour.startDate,
             endDate: tour.endDate
         });
-        // Cuộn lên đầu trang form
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setIsFormModalOpen(true);
     };
 
     // 2.3. Hủy chế độ Sửa -> Về chế độ Tạo
     const handleCancelEdit = () => {
         setEditingId(null);
         setForm({ name: '', season: '', startDate: '', endDate: '' });
+        setIsFormModalOpen(false);
     };
 
     // 2.4. Xóa giải đấu
@@ -501,59 +511,24 @@ export const AdminTournamentPage = () => {
 
     // ================== GIAO DIỆN DANH SÁCH (MẶC ĐỊNH = LIST) ==================
     return (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
-            {/* CỘT TRÁI: FORM TẠO / SỬA */}
-            <div className="md:col-span-4 md:sticky md:top-6 h-fit">
-                <Card className={editingId ? 'border-orange-200 shadow-orange-100' : ''}>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            <span className="flex items-center gap-2">
-                                {editingId ? <Pencil className="text-orange-500" /> : <Trophy className="text-blue-500" />}
-                                {editingId ? 'Cập Nhật Giải Đấu' : 'Tạo Giải Đấu Mới'}
-                            </span>
-                            {editingId && (
-                                <Button variant="ghost" size="sm" onClick={handleCancelEdit} className="h-8 text-xs">
-                                    Hủy
-                                </Button>
-                            )}
-                        </CardTitle>
-                        <CardDescription>
-                            {editingId ? 'Chỉnh sửa thông tin giải đấu hiện tại.' : 'Nhập thông tin để tổ chức giải đấu mới.'}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Tên Giải Đấu</Label>
-                                <Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="VD: Premier League 2025" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Mùa Giải</Label>
-                                <Input required value={form.season} onChange={e => setForm({ ...form, season: e.target.value })} placeholder="VD: 2024-2025" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <Label>Ngày Bắt đầu</Label>
-                                    <Input type="date" required value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Ngày Kết thúc</Label>
-                                    <Input type="date" required value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
-                                </div>
-                            </div>
-                            <Button type="submit" disabled={loading}
-                                className={`w-full ${editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}
-                            >
-                                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                                {editingId ? 'Lưu Cập Nhật' : 'Tạo Giải Đấu'}
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+        <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+            {/* HEADER VÀ NÚT THÊM MỚI */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Quản Lý Giải Đấu</h2>
+                    <p className="text-muted-foreground">Quản lý các giải đấu đang diễn ra.</p>
+                </div>
+                <Button onClick={() => {
+                    handleCancelEdit();
+                    setIsFormModalOpen(true);
+                }} className="bg-blue-600 hover:bg-blue-700">
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Tạo Giải Đấu Mới
+                </Button>
             </div>
 
-            {/* CỘT PHẢI: DANH SÁCH GIẢI ĐẤU */}
-            <div className="md:col-span-8">
+            {/* DANH SÁCH GIẢI ĐẤU */}
+            <div>
                 <Card className="h-full">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <div className="space-y-1">
@@ -617,6 +592,55 @@ export const AdminTournamentPage = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* MODAL TẠO/SỬA GIẢI ĐẤU */}
+            <Dialog open={isFormModalOpen} onOpenChange={(open) => {
+                setIsFormModalOpen(open);
+                if (!open) handleCancelEdit();
+            }}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            {editingId ? <Pencil className="w-5 h-5 text-orange-500" /> : <Trophy className="w-5 h-5 text-blue-500" />}
+                            {editingId ? 'Cập Nhật Giải Đấu' : 'Tạo Giải Đấu Mới'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {editingId ? 'Chỉnh sửa thông tin giải đấu hiện tại.' : 'Nhập thông tin để tổ chức giải đấu mới.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Tên Giải Đấu</Label>
+                            <Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="VD: Premier League 2025" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Mùa Giải</Label>
+                            <Input required value={form.season} onChange={e => setForm({ ...form, season: e.target.value })} placeholder="VD: 2024-2025" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label>Ngày Bắt đầu</Label>
+                                <Input type="date" required value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Ngày Kết thúc</Label>
+                                <Input type="date" required value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                                Hủy
+                            </Button>
+                            <Button type="submit" disabled={loading}
+                                className={editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}
+                            >
+                                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                                {editingId ? 'Lưu Cập Nhật' : 'Tạo Giải Đấu'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

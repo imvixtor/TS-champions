@@ -14,6 +14,14 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { Loader2, Calendar, MapPin, ArrowRightLeft, Trophy, Info } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
@@ -30,6 +38,7 @@ export const AdminSchedulePage = () => {
     const [stadium, setStadium] = useState('');
     const [roundName, setRoundName] = useState('Vòng 1');
     const [loading, setLoading] = useState(false);
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
     // Load dữ liệu ban đầu
     useEffect(() => {
@@ -97,6 +106,7 @@ export const AdminSchedulePage = () => {
             // Reset form thông minh (Giữ lại giải đấu và vòng để nhập tiếp cho nhanh)
             setHomeTeamId('');
             setAwayTeamId('');
+            setIsFormModalOpen(false); // Đóng modal
             // setTournamentId(''); // Không reset giải đấu
             // setRoundName('');    // Không reset vòng đấu
         } catch (error) {
@@ -108,132 +118,22 @@ export const AdminSchedulePage = () => {
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+        <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
 
-            {/* CỘT TRÁI: FORM NHẬP LIỆU */}
-            <div className="lg:col-span-7 xl:col-span-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            <span className="flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-blue-600" />
-                                Thiết Lập Trận Đấu
-                            </span>
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">Admin Mode</Badge>
-                        </CardTitle>
-                        <CardDescription>
-                            Tạo lịch thi đấu mới cho các giải đấu.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSchedule} className="space-y-6">
-
-                            {/* 1. Giải Đấu & Vòng */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label>Giải Đấu</Label>
-                                    <Select value={tournamentId} onValueChange={setTournamentId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="-- Chọn giải đấu --" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {tournaments.map(t => (
-                                                <SelectItem key={t.id} value={String(t.id)}>{t.name} ({t.season})</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Tên Vòng Đấu</Label>
-                                    <Input value={roundName} onChange={e => setRoundName(e.target.value)} placeholder="VD: Vòng 1, Chung kết" />
-                                </div>
-                            </div>
-
-                            {/* 2. Chọn Đội (Khu vực thông minh) */}
-                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 relative">
-                                {/* Nút Swap nằm giữa */}
-                                <Button
-                                    type="button"
-                                    size="icon"
-                                    variant="outline"
-                                    onClick={handleSwapTeams}
-                                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm bg-white hover:bg-slate-50 hover:rotate-180 transition-transform duration-300 z-10"
-                                    title="Hoán đổi đội nhà/khách"
-                                >
-                                    <ArrowRightLeft className="w-4 h-4 text-blue-600" />
-                                </Button>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* Đội Nhà */}
-                                    <div className="space-y-2">
-                                        <Label className="flex items-center gap-2 text-blue-800">
-                                            <span className="w-2 h-2 rounded-full bg-blue-600"></span> Đội Nhà (Home)
-                                        </Label>
-                                        <Select value={homeTeamId} onValueChange={setHomeTeamId}>
-                                            <SelectTrigger className="border-blue-200 focus:ring-blue-200 bg-white">
-                                                <SelectValue placeholder="-- Chọn đội nhà --" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {teams.map(t => (
-                                                    <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    {/* Đội Khách */}
-                                    <div className="space-y-2">
-                                        <Label className="flex items-center gap-2 text-red-800">
-                                            <span className="w-2 h-2 rounded-full bg-red-600"></span> Đội Khách (Away)
-                                        </Label>
-                                        <Select value={awayTeamId} onValueChange={setAwayTeamId}>
-                                            <SelectTrigger className="border-red-200 focus:ring-red-200 bg-white">
-                                                <SelectValue placeholder="-- Chọn đội khách --" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {teams.map(t => (
-                                                    <SelectItem key={t.id} value={String(t.id)} disabled={String(t.id) === homeTeamId}>
-                                                        {t.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 3. Thời gian & Sân */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label>Ngày giờ thi đấu</Label>
-                                    <Input
-                                        type="datetime-local"
-                                        value={matchDate} onChange={e => setMatchDate(e.target.value)}
-                                        required
-                                        className="font-mono"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Sân vận động</Label>
-                                    <Input
-                                        value={stadium} onChange={e => setStadium(e.target.value)}
-                                        placeholder="Tự động điền theo đội nhà..."
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 h-10 text-base">
-                                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                                Lưu Lịch Thi Đấu
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+            {/* HEADER VÀ NÚT THÊM MỚI */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Lên Lịch Thi Đấu</h2>
+                    <p className="text-muted-foreground">Tạo lịch thi đấu mới cho các giải đấu.</p>
+                </div>
+                <Button onClick={() => setIsFormModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Thiết Lập Trận Đấu
+                </Button>
             </div>
 
-            {/* CỘT PHẢI: LIVE PREVIEW (XEM TRƯỚC) */}
-            <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 h-fit">
+            {/* LIVE PREVIEW (XEM TRƯỚC) */}
+            <div className="max-w-2xl mx-auto">
                 <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                         <Info className="w-4 h-4" /> Xem trước hiển thị
@@ -318,6 +218,127 @@ export const AdminSchedulePage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* MODAL THIẾT LẬP TRẬN ĐẤU */}
+            <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
+                <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-blue-600" />
+                            Thiết Lập Trận Đấu
+                        </DialogTitle>
+                        <DialogDescription>
+                            Tạo lịch thi đấu mới cho các giải đấu.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSchedule} className="space-y-6">
+                        {/* 1. Giải Đấu & Vòng */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label>Giải Đấu</Label>
+                                <Select value={tournamentId} onValueChange={setTournamentId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="-- Chọn giải đấu --" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {tournaments.map(t => (
+                                            <SelectItem key={t.id} value={String(t.id)}>{t.name} ({t.season})</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Tên Vòng Đấu</Label>
+                                <Input value={roundName} onChange={e => setRoundName(e.target.value)} placeholder="VD: Vòng 1, Chung kết" />
+                            </div>
+                        </div>
+
+                        {/* 2. Chọn Đội (Khu vực thông minh) */}
+                        <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 relative">
+                            {/* Nút Swap nằm giữa */}
+                            <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={handleSwapTeams}
+                                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-sm bg-white hover:bg-slate-50 hover:rotate-180 transition-transform duration-300 z-10"
+                                title="Hoán đổi đội nhà/khách"
+                            >
+                                <ArrowRightLeft className="w-4 h-4 text-blue-600" />
+                            </Button>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Đội Nhà */}
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-blue-800">
+                                        <span className="w-2 h-2 rounded-full bg-blue-600"></span> Đội Nhà (Home)
+                                    </Label>
+                                    <Select value={homeTeamId} onValueChange={setHomeTeamId}>
+                                        <SelectTrigger className="border-blue-200 focus:ring-blue-200 bg-white">
+                                            <SelectValue placeholder="-- Chọn đội nhà --" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {teams.map(t => (
+                                                <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Đội Khách */}
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-red-800">
+                                        <span className="w-2 h-2 rounded-full bg-red-600"></span> Đội Khách (Away)
+                                    </Label>
+                                    <Select value={awayTeamId} onValueChange={setAwayTeamId}>
+                                        <SelectTrigger className="border-red-200 focus:ring-red-200 bg-white">
+                                            <SelectValue placeholder="-- Chọn đội khách --" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {teams.map(t => (
+                                                <SelectItem key={t.id} value={String(t.id)} disabled={String(t.id) === homeTeamId}>
+                                                    {t.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. Thời gian & Sân */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label>Ngày giờ thi đấu</Label>
+                                <Input
+                                    type="datetime-local"
+                                    value={matchDate} onChange={e => setMatchDate(e.target.value)}
+                                    required
+                                    className="font-mono"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Sân vận động</Label>
+                                <Input
+                                    value={stadium} onChange={e => setStadium(e.target.value)}
+                                    placeholder="Tự động điền theo đội nhà..."
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsFormModalOpen(false)}>
+                                Hủy
+                            </Button>
+                            <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+                                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                                Lưu Lịch Thi Đấu
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
