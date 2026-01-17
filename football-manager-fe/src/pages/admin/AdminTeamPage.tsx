@@ -162,7 +162,7 @@ export const AdminTeamPage = () => {
     };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+        <div className="space-y-6 w-full p-4 animate-fade-in-up">
 
             {/* HEADER VÀ NÚT THÊM MỚI */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
@@ -180,8 +180,8 @@ export const AdminTeamPage = () => {
             </div>
 
             {/* DANH SÁCH ĐỘI BÓNG */}
-            <div>
-                <Card>
+            <div className="w-full">
+                <Card className="w-full">
                     <CardHeader>
                         <CardTitle>Danh Sách Đội Bóng</CardTitle>
                         <CardDescription>Quản lý tất cả các đội bóng trong hệ thống.</CardDescription>

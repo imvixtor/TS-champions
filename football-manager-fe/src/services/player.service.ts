@@ -28,6 +28,21 @@ export const playerService = {
     },
 
     /**
+     * Cập nhật cầu thủ
+     */
+    updatePlayer: async (playerId: number, data: CreatePlayerRequest, avatarFile?: File): Promise<void> => {
+        const formData = new FormData();
+        const jsonBlob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        formData.append('player', jsonBlob);
+        if (avatarFile) {
+            formData.append('avatar', avatarFile);
+        }
+        await axiosClient.put(`/champions/player/update/${playerId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
+
+    /**
      * Xóa cầu thủ
      */
     deletePlayer: async (playerId: number): Promise<void> => {

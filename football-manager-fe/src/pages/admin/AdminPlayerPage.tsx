@@ -31,7 +31,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, Trash2, UserPlus } from "lucide-react"
+import { Loader2, Trash2, UserPlus, Pencil } from "lucide-react"
 
 export const AdminPlayerPage = () => {
     // State Form
@@ -47,6 +47,7 @@ export const AdminPlayerPage = () => {
     const [loading, setLoading] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [editingPlayerId, setEditingPlayerId] = useState<number | null>(null);
 
     // 1. Load danh sách Đội bóng (để bỏ vào Dropdown)
     useEffect(() => {
@@ -80,42 +81,67 @@ export const AdminPlayerPage = () => {
         }
     };
 
-    // 3. Xử lý Thêm Cầu Thủ
-    const handleCreatePlayer = async (e: React.FormEvent) => {
+    // 3. Xử lý Thêm/Sửa Cầu Thủ
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedTeamId) return alert("Vui lòng chọn đội bóng trước!");
         setLoading(true);
 
         try {
-            await playerService.createPlayer({
+            const playerData = {
                 name,
                 shirtNumber: Number(shirtNumber),
                 position,
                 teamId: Number(selectedTeamId)
-            }, avatar || undefined);
+            };
 
-            alert("✅ Thêm cầu thủ thành công!");
-            setName(''); setShirtNumber(''); setAvatar(null); // Reset form
-            // Reset file input manually if needed
-            const fileInput = document.getElementById('avatarInput') as HTMLInputElement;
-            if (fileInput) fileInput.value = '';
+            if (editingPlayerId) {
+                await playerService.updatePlayer(editingPlayerId, playerData, avatar || undefined);
+                alert("✅ Cập nhật cầu thủ thành công!");
+            } else {
+                await playerService.createPlayer(playerData, avatar || undefined);
+                alert("✅ Thêm cầu thủ thành công!");
+            }
 
-            setIsFormModalOpen(false); // Đóng modal
+            handleCancelEdit(); // Reset form và đóng modal
             fetchPlayers(selectedTeamId); // Load lại danh sách ngay
 
         } catch (error: unknown) {
-            console.error("Lỗi thêm:", error);
+            console.error("Lỗi:", error);
             if ((error as { response?: { status?: number } })?.response?.status === 403) {
                 alert("❌ Lỗi quyền hạn (403). Hãy logout và login lại!");
             } else {
-                alert("❌ Lỗi thêm cầu thủ! Kiểm tra console.");
+                alert(`❌ Lỗi ${editingPlayerId ? 'cập nhật' : 'thêm'} cầu thủ! Kiểm tra console.`);
             }
         } finally {
             setLoading(false);
         }
     };
 
-    // 4. Xử lý Xóa Cầu Thủ
+    // 4. Xử lý Chỉnh sửa Cầu Thủ
+    const handleEditClick = (player: Player) => {
+        setEditingPlayerId(player.id);
+        setName(player.name);
+        setShirtNumber(player.shirtNumber.toString());
+        setPosition(player.position);
+        setAvatar(null); // Reset avatar file, giữ avatar hiện tại
+        setSelectedTeamId(player.teamId.toString());
+        setIsFormModalOpen(true);
+    };
+
+    // 5. Hủy chế độ Sửa -> Về chế độ Tạo
+    const handleCancelEdit = () => {
+        setEditingPlayerId(null);
+        setName('');
+        setShirtNumber('');
+        setPosition('FW');
+        setAvatar(null);
+        const fileInput = document.getElementById('avatarInput') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        setIsFormModalOpen(false);
+    };
+
+    // 6. Xử lý Xóa Cầu Thủ
     const handleDelete = async (playerId: number) => {
         if (!confirm("Bạn có chắc chắn muốn xóa cầu thủ này?")) return;
 
@@ -130,7 +156,7 @@ export const AdminPlayerPage = () => {
     };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+        <div className="space-y-6 w-full p-4 animate-fade-in-up">
 
             {/* HEADER VÀ NÚT THÊM MỚI */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
@@ -157,8 +183,8 @@ export const AdminPlayerPage = () => {
             </div>
 
             {/* DANH SÁCH CẦU THỦ */}
-            <div>
-                <Card className="h-full">
+            <div className="w-full">
+                <Card className="w-full h-full">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <div className="space-y-1">
                             <CardTitle>Danh Sách Cầu Thủ</CardTitle>
@@ -210,15 +236,26 @@ export const AdminPlayerPage = () => {
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                            onClick={() => handleDelete(p.id)}
-                                                            title="Xóa cầu thủ"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
+                                                        <div className="flex justify-end gap-2">
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                                                                onClick={() => handleEditClick(p)}
+                                                                title="Sửa cầu thủ"
+                                                            >
+                                                                <Pencil className="w-4 h-4" />
+                                                            </Button>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                                onClick={() => handleDelete(p.id)}
+                                                                title="Xóa cầu thủ"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))
@@ -237,18 +274,22 @@ export const AdminPlayerPage = () => {
                 </Card>
             </div>
 
-            {/* MODAL THÊM CẦU THỦ */}
-            <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
+            {/* MODAL THÊM/SỬA CẦU THỦ */}
+            <Dialog open={isFormModalOpen} onOpenChange={(open) => {
+                setIsFormModalOpen(open);
+                if (!open) handleCancelEdit();
+            }}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <UserPlus className="w-5 h-5" /> Thêm Cầu Thủ
+                            {editingPlayerId ? <Pencil className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                            {editingPlayerId ? 'Sửa Cầu Thủ' : 'Thêm Cầu Thủ'}
                         </DialogTitle>
                         <DialogDescription>
-                            Tạo hồ sơ cầu thủ mới cho đội bóng.
+                            {editingPlayerId ? 'Chỉnh sửa thông tin cầu thủ.' : 'Tạo hồ sơ cầu thủ mới cho đội bóng.'}
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleCreatePlayer} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Chọn đội để thêm vào */}
                         <div className="space-y-2">
                             <Label>Chọn Đội Bóng</Label>
@@ -296,12 +337,12 @@ export const AdminPlayerPage = () => {
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsFormModalOpen(false)}>
+                            <Button type="button" variant="outline" onClick={handleCancelEdit}>
                                 Hủy
                             </Button>
                             <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700">
                                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                Lưu Cầu Thủ
+                                {editingPlayerId ? 'Cập Nhật' : 'Lưu Cầu Thủ'}
                             </Button>
                         </DialogFooter>
                     </form>

@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import { publicService, teamService, matchService } from '../../services';
+import type { TournamentBasic, Team } from '../../types';
 import { getImageUrl } from '../../utils';
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import {
     Select,
     SelectContent,
@@ -27,8 +28,8 @@ import { Separator } from "@/components/ui/separator"
 
 export const AdminSchedulePage = () => {
     // Data List
-    const [tournaments, setTournaments] = useState<any[]>([]);
-    const [teams, setTeams] = useState<any[]>([]);
+    const [tournaments, setTournaments] = useState<TournamentBasic[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
 
     // Form State
     const [tournamentId, setTournamentId] = useState('');
@@ -59,12 +60,12 @@ export const AdminSchedulePage = () => {
 
     // LOGIC THÔNG MINH 1: Tự động điền sân vận động khi chọn Đội Nhà
     useEffect(() => {
-        if (homeTeamId) {
+        if (homeTeamId && teams.length > 0) {
             const homeTeam = teams.find(t => t.id === Number(homeTeamId));
             // Chỉ tự điền nếu ô Stadium đang trống hoặc đang chứa sân của đội nhà cũ
             if (homeTeam) setStadium(homeTeam.stadium);
         }
-    }, [homeTeamId]); // Bỏ teams ra khỏi dependency để tránh re-render thừa
+    }, [homeTeamId, teams]);
 
     // LOGIC THÔNG MINH 2: Tìm object đội bóng để hiển thị Preview
     const selectedHomeTeam = useMemo(() => teams.find(t => t.id === Number(homeTeamId)), [homeTeamId, teams]);
@@ -118,7 +119,7 @@ export const AdminSchedulePage = () => {
     };
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+        <div className="space-y-6 w-full p-4 animate-fade-in-up">
 
             {/* HEADER VÀ NÚT THÊM MỚI */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
@@ -133,7 +134,7 @@ export const AdminSchedulePage = () => {
             </div>
 
             {/* LIVE PREVIEW (XEM TRƯỚC) */}
-            <div className="max-w-2xl mx-auto">
+            <div className="w-full">
                 <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                         <Info className="w-4 h-4" /> Xem trước hiển thị
@@ -161,7 +162,7 @@ export const AdminSchedulePage = () => {
                                 {/* Đội Nhà */}
                                 <div className="flex flex-col items-center w-1/3 text-center space-y-2">
                                     <div className="w-20 h-20 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border border-slate-100">
-                                        <img src={getImageUrl(selectedHomeTeam?.logoUrl)} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://placehold.co/60'} />
+                                        <img src={getImageUrl(selectedHomeTeam?.logoUrl || null)} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://placehold.co/60'} />
                                     </div>
                                     <div className="font-bold text-slate-800 text-sm leading-tight">
                                         {selectedHomeTeam ? selectedHomeTeam.name : 'Home Team'}
@@ -181,7 +182,7 @@ export const AdminSchedulePage = () => {
                                 {/* Đội Khách */}
                                 <div className="flex flex-col items-center w-1/3 text-center space-y-2">
                                     <div className="w-20 h-20 bg-white rounded-full p-2 shadow-sm flex items-center justify-center border border-slate-100">
-                                        <img src={getImageUrl(selectedAwayTeam?.logoUrl)} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://placehold.co/60'} />
+                                        <img src={getImageUrl(selectedAwayTeam?.logoUrl || null)} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://placehold.co/60'} />
                                     </div>
                                     <div className="font-bold text-slate-800 text-sm leading-tight">
                                         {selectedAwayTeam ? selectedAwayTeam.name : 'Away Team'}

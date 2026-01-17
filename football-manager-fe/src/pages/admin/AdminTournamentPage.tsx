@@ -256,7 +256,7 @@ export const AdminTournamentPage = () => {
     // ================== GIAO DIỆN CHI TIẾT (VIEW MODE = DETAIL) ==================
     if (viewMode === 'DETAIL' && selectedTournament) {
         return (
-            <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+            <div className="space-y-6 w-full p-4 animate-fade-in-up">
                 {/* Header Info */}
                 <div className="flex items-center gap-4">
                     <Button variant="outline" onClick={() => setViewMode('LIST')}>
@@ -511,7 +511,7 @@ export const AdminTournamentPage = () => {
 
     // ================== GIAO DIỆN DANH SÁCH (MẶC ĐỊNH = LIST) ==================
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto p-4 animate-fade-in-up">
+        <div className="space-y-6 w-full p-4 animate-fade-in-up">
             {/* HEADER VÀ NÚT THÊM MỚI */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
                 <div>
@@ -528,8 +528,8 @@ export const AdminTournamentPage = () => {
             </div>
 
             {/* DANH SÁCH GIẢI ĐẤU */}
-            <div>
-                <Card className="h-full">
+            <div className="w-full">
+                <Card className="w-full h-full">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <div className="space-y-1">
                             <CardTitle>Danh Sách Giải Đấu</CardTitle>
