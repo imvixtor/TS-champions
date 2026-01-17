@@ -38,6 +38,9 @@ export const AdminSchedulePage = () => {
     // Filter State
     const [selectedTourId, setSelectedTourId] = useState<string>("");
     const [filterGroup, setFilterGroup] = useState<string>('all');
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [filterRound, setFilterRound] = useState<string>('all');
+    const [searchTerm, setSearchTerm] = useState<string>('');
     
     // Sort State
     type SortField = 'date' | 'round' | 'status' | 'homeTeam' | 'awayTeam';
@@ -212,9 +215,44 @@ export const AdminSchedulePage = () => {
         alert("⚠️ Chức năng xóa trận đấu chưa được implement!");
     };
 
-    // Sắp xếp matches
-    const sortedMatches = useMemo(() => {
-        const sorted = [...matches].sort((a, b) => {
+    // Lấy danh sách vòng đấu unique từ matches
+    const roundNames = useMemo(() => {
+        const rounds = matches.map(m => m.roundName || 'Chưa xếp vòng').filter((r, i, arr) => arr.indexOf(r) === i);
+        return rounds.sort();
+    }, [matches]);
+
+    // Filter và sắp xếp matches
+    const filteredAndSortedMatches = useMemo(() => {
+        // Filter
+        let filtered = matches.filter(match => {
+            // Filter by group
+            if (filterGroup !== 'all' && match.groupName !== filterGroup) return false;
+            
+            // Filter by status
+            if (filterStatus !== 'all' && match.status !== filterStatus) return false;
+            
+            // Filter by round
+            if (filterRound !== 'all') {
+                const matchRound = match.roundName || 'Chưa xếp vòng';
+                if (matchRound !== filterRound) return false;
+            }
+            
+            // Filter by search term
+            if (searchTerm) {
+                const searchLower = searchTerm.toLowerCase();
+                const matchesSearch = 
+                    match.homeTeam.toLowerCase().includes(searchLower) ||
+                    match.awayTeam.toLowerCase().includes(searchLower) ||
+                    (match.roundName || '').toLowerCase().includes(searchLower) ||
+                    (match.stadium || '').toLowerCase().includes(searchLower);
+                if (!matchesSearch) return false;
+            }
+            
+            return true;
+        });
+        
+        // Sort
+        const sorted = [...filtered].sort((a, b) => {
             let compareResult = 0;
             
             switch (sortField) {
@@ -245,27 +283,7 @@ export const AdminSchedulePage = () => {
         });
         
         return sorted;
-    }, [matches, sortField, sortDirection]);
-
-    // Hàm xử lý sort
-    const handleSort = (field: SortField) => {
-        if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection('asc');
-        }
-    };
-
-    // Icon sort
-    const getSortIcon = (field: SortField) => {
-        if (sortField !== field) {
-            return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
-        }
-        return sortDirection === 'asc' 
-            ? <ArrowUp className="w-3 h-3 ml-1" />
-            : <ArrowDown className="w-3 h-3 ml-1" />;
-    };
+    }, [matches, filterGroup, filterStatus, filterRound, searchTerm, sortField, sortDirection]);
 
     return (
         <div className="min-h-screen w-full p-3 sm:p-4 md:p-6 animate-fade-in-up pb-10 max-w-[1920px] mx-auto">
@@ -318,44 +336,147 @@ export const AdminSchedulePage = () => {
                 </div>
             </div>
 
-            {/* Filter Group & Sort Controls */}
+            {/* Filter & Sort Controls */}
             {selectedTourId && matches.length > 0 && (
-                <div className="space-y-3 mb-4">
-                    {/* Filter Group */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                        <Button
-                            variant={filterGroup === 'all' ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setFilterGroup('all')}
-                            className="rounded-full flex-shrink-0"
-                        >
-                            Tất cả
-                        </Button>
-                        {['Group A', 'Group B', 'Group C', 'Group D'].map(g => (
+                <div className="space-y-4 mb-6 p-4 bg-slate-50 rounded-lg border">
+                    {/* Search */}
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Tìm kiếm theo tên đội, vòng đấu, sân..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="flex-1 max-w-md"
+                        />
+                        {(filterGroup !== 'all' || filterStatus !== 'all' || filterRound !== 'all' || searchTerm) && (
                             <Button
-                                key={g}
-                                variant={filterGroup === g ? "default" : "outline"}
+                                variant="outline"
                                 size="sm"
-                                onClick={() => setFilterGroup(g)}
-                                className="rounded-full flex-shrink-0"
+                                onClick={() => {
+                                    setFilterGroup('all');
+                                    setFilterStatus('all');
+                                    setFilterRound('all');
+                                    setSearchTerm('');
+                                }}
                             >
-                                {g}
+                                Xóa bộ lọc
                             </Button>
-                        ))}
+                        )}
                     </div>
-                    
-                    {/* Sort Info */}
-                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                        <span>Sắp xếp theo:</span>
-                        <Badge variant="outline" className="text-xs">
-                            {sortField === 'date' && 'Ngày giờ'}
-                            {sortField === 'round' && 'Vòng đấu'}
-                            {sortField === 'status' && 'Trạng thái'}
-                            {sortField === 'homeTeam' && 'Đội nhà'}
-                            {sortField === 'awayTeam' && 'Đội khách'}
-                            {' '}
-                            {sortDirection === 'asc' ? '(Tăng dần)' : '(Giảm dần)'}
-                        </Badge>
+
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        {/* Filter Group */}
+                        <div className="flex-1">
+                            <Label className="text-xs text-muted-foreground mb-2 block">Bảng đấu</Label>
+                            <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+                                <Button
+                                    variant={filterGroup === 'all' ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setFilterGroup('all')}
+                                    className="rounded-full flex-shrink-0"
+                                >
+                                    Tất cả
+                                </Button>
+                                {['Group A', 'Group B', 'Group C', 'Group D'].map(g => (
+                                    <Button
+                                        key={g}
+                                        variant={filterGroup === g ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setFilterGroup(g)}
+                                        className="rounded-full flex-shrink-0"
+                                    >
+                                        {g}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Filter Status */}
+                        <div className="flex-1">
+                            <Label className="text-xs text-muted-foreground mb-2 block">Trạng thái</Label>
+                            <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+                                <Button
+                                    variant={filterStatus === 'all' ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setFilterStatus('all')}
+                                    className="rounded-full flex-shrink-0"
+                                >
+                                    Tất cả
+                                </Button>
+                                <Button
+                                    variant={filterStatus === 'SCHEDULED' ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setFilterStatus('SCHEDULED')}
+                                    className="rounded-full flex-shrink-0"
+                                >
+                                    Sắp đá
+                                </Button>
+                                <Button
+                                    variant={filterStatus === 'IN_PROGRESS' ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setFilterStatus('IN_PROGRESS')}
+                                    className="rounded-full flex-shrink-0"
+                                >
+                                    Đang diễn ra
+                                </Button>
+                                <Button
+                                    variant={filterStatus === 'FINISHED' ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setFilterStatus('FINISHED')}
+                                    className="rounded-full flex-shrink-0"
+                                >
+                                    Kết thúc
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Filter Round */}
+                        <div className="flex-1">
+                            <Label className="text-xs text-muted-foreground mb-2 block">Vòng đấu</Label>
+                            <Select value={filterRound} onValueChange={setFilterRound}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Tất cả vòng" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tất cả vòng</SelectItem>
+                                    {roundNames.map(round => (
+                                        <SelectItem key={round} value={round}>{round}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Sort */}
+                        <div className="flex-1">
+                            <Label className="text-xs text-muted-foreground mb-2 block">Sắp xếp</Label>
+                            <div className="flex items-center gap-2">
+                                <Select value={`${sortField}-${sortDirection}`} onValueChange={(value) => {
+                                    const [field, direction] = value.split('-') as [SortField, SortDirection];
+                                    setSortField(field);
+                                    setSortDirection(direction);
+                                }}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="date-asc">Ngày giờ (Tăng dần)</SelectItem>
+                                        <SelectItem value="date-desc">Ngày giờ (Giảm dần)</SelectItem>
+                                        <SelectItem value="round-asc">Vòng đấu (A-Z)</SelectItem>
+                                        <SelectItem value="round-desc">Vòng đấu (Z-A)</SelectItem>
+                                        <SelectItem value="status-asc">Trạng thái (A-Z)</SelectItem>
+                                        <SelectItem value="status-desc">Trạng thái (Z-A)</SelectItem>
+                                        <SelectItem value="homeTeam-asc">Đội nhà (A-Z)</SelectItem>
+                                        <SelectItem value="homeTeam-desc">Đội nhà (Z-A)</SelectItem>
+                                        <SelectItem value="awayTeam-asc">Đội khách (A-Z)</SelectItem>
+                                        <SelectItem value="awayTeam-desc">Đội khách (Z-A)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Results count */}
+                    <div className="text-xs text-muted-foreground pt-2 border-t">
+                        Hiển thị {filteredAndSortedMatches.length} / {matches.length} trận đấu
                     </div>
                 </div>
             )}
@@ -378,7 +499,14 @@ export const AdminSchedulePage = () => {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {sortedMatches.map((match) => (
+                    {filteredAndSortedMatches.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground border rounded-lg">
+                            <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                            <p className="text-base font-medium">Không tìm thấy trận đấu nào</p>
+                            <p className="text-sm mt-2">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                        </div>
+                    ) : (
+                        filteredAndSortedMatches.map((match) => (
                         <Card key={match.id} className="transition-all hover:shadow-md group">
                             <CardContent className="p-4">
                                 <div className="flex flex-col lg:flex-row gap-4">
@@ -491,7 +619,8 @@ export const AdminSchedulePage = () => {
                                 </div>
                             </CardContent>
                         </Card>
-                    ))}
+                        ))
+                    )}
                 </div>
             )}
 
