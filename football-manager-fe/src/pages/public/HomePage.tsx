@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar as CalendarIcon, FilterX } from "lucide-react"
+import { Calendar as CalendarIcon, FilterX, Trophy } from "lucide-react"
 
 // Helper: Lấy ngày hôm nay định dạng YYYY-MM-DD
 const getTodayString = () => new Date().toISOString().split('T')[0];
@@ -77,7 +77,12 @@ export const HomePage = () => {
                                         <SelectValue placeholder="Chọn giải đấu" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">🏆 Tất cả giải đấu</SelectItem>
+                                        <SelectItem value="all">
+                                            <span className="flex items-center gap-2">
+                                                <Trophy className="w-4 h-4" />
+                                                Tất cả giải đấu
+                                            </span>
+                                        </SelectItem>
                                         {tournaments.map(t => (
                                             <SelectItem key={t.id} value={String(t.id)}>
                                                 {t.name} ({t.season})

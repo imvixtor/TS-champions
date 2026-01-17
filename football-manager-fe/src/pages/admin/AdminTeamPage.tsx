@@ -5,7 +5,7 @@ import { getImageUrl, exportToCSV, readCSVFile } from '../../utils';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import {
     Table,
     TableBody,
@@ -23,7 +23,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Plus, Pencil, Trash2, Users, UserPlus, Download, Upload } from "lucide-react"
+import { Loader2, Plus, Pencil, Trash2, Users, UserPlus, Download, Upload, ClipboardList, Info, Building2, User } from "lucide-react"
 
 export const AdminTeamPage = () => {
     // State Form & List
@@ -222,52 +222,57 @@ export const AdminTeamPage = () => {
     };
 
     return (
-        <div className="space-y-6 w-full p-4 animate-fade-in-up">
+        <div className="min-h-screen w-full p-3 sm:p-4 md:p-6 animate-fade-in-up pb-10 max-w-[1920px] mx-auto">
 
             {/* HEADER VÀ NÚT THÊM MỚI */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Quản Lý Đội Bóng</h2>
-                    <p className="text-muted-foreground">Quản lý tất cả các đội bóng trong hệ thống.</p>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 pb-4 border-b">
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Quản Lý Đội Bóng</h2>
+                    <p className="text-sm sm:text-base text-muted-foreground">Quản lý tất cả các đội bóng trong hệ thống.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleExportCSV}>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
+                    <Button variant="outline" onClick={handleExportCSV} size="sm">
                         <Download className="w-4 h-4 mr-2" />
-                        Xuất CSV
+                        <span className="hidden sm:inline">Xuất CSV</span>
+                        <span className="sm:hidden">Xuất</span>
                     </Button>
-                    <Button variant="outline" onClick={() => setShowImportModal(true)}>
+                    <Button variant="outline" onClick={() => setShowImportModal(true)} size="sm">
                         <Upload className="w-4 h-4 mr-2" />
-                        Nhập CSV
+                        <span className="hidden sm:inline">Nhập CSV</span>
+                        <span className="sm:hidden">Nhập</span>
                     </Button>
                     <Button onClick={() => {
                         handleCancelEdit();
                         setIsFormModalOpen(true);
-                    }} className="bg-blue-600 hover:bg-blue-700">
+                    }} size="sm" className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
                         <Plus className="w-4 h-4 mr-2" />
-                        Thêm Đội Mới
+                        <span className="hidden sm:inline">Thêm Đội Mới</span>
+                        <span className="sm:hidden">Thêm</span>
                     </Button>
                 </div>
             </div>
 
             {/* DANH SÁCH ĐỘI BÓNG */}
-            <div className="w-full">
-                <Card className="w-full">
-                    <CardHeader>
-                        <CardTitle>Danh Sách Đội Bóng</CardTitle>
-                        <CardDescription>Quản lý tất cả các đội bóng trong hệ thống.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
+            {teams.length === 0 ? (
+                <div className="text-center py-20 text-muted-foreground">
+                    <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-semibold">Chưa có đội bóng nào</p>
+                    <p className="text-sm mt-2">Hãy thêm đội bóng hoặc import từ CSV</p>
+                </div>
+            ) : (
+                <Card className="overflow-hidden">
+                    <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow>
+                                <TableRow className="hover:bg-transparent">
                                     <TableHead className="w-[80px] text-center">Logo</TableHead>
                                     <TableHead>Thông tin đội bóng</TableHead>
-                                    <TableHead className="text-right">Hành động</TableHead>
+                                    <TableHead className="text-right">Thao tác</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {teams.map((team) => (
-                                    <TableRow key={team.id}>
+                                    <TableRow key={team.id} className="hover:bg-muted/30">
                                         <TableCell className="text-center p-2">
                                             <img
                                                 src={getImageUrl(team.logo)}
@@ -282,23 +287,52 @@ export const AdminTeamPage = () => {
                                                 <Badge variant="secondary" className="text-xs font-normal">{team.shortName}</Badge>
                                             </div>
                                             <div className="text-sm text-muted-foreground mt-1 flex flex-col sm:flex-row gap-1 sm:gap-3">
-                                                <span>🏟️ {team.stadium}</span>
-                                                <span>👔 {team.coachName || 'N/A'}</span>
+                                                <span className="flex items-center gap-1">
+                                                    <Building2 className="w-3 h-3" />
+                                                    {team.stadium}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <User className="w-3 h-3" />
+                                                    {team.coachName || 'N/A'}
+                                                </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2 flex-wrap">
-                                                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => handleViewPlayers(team)}>
-                                                    <Users className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Squad</span>
+                                        <TableCell>
+                                            <div className="flex items-center justify-end gap-2 flex-wrap">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-7 text-xs"
+                                                    onClick={() => handleViewPlayers(team)}
+                                                >
+                                                    <Users className="w-3 h-3 mr-1" />
+                                                    Squad
                                                 </Button>
-                                                <Button size="sm" variant="outline" className="h-8 gap-1 border-purple-200 text-purple-700 hover:text-purple-800 hover:bg-purple-50" onClick={() => handleOpenCoachModal(team)}>
-                                                    <UserPlus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Cấp HLV</span>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-7 text-xs border-purple-300 text-purple-700 hover:bg-purple-50"
+                                                    onClick={() => handleOpenCoachModal(team)}
+                                                >
+                                                    <UserPlus className="w-3 h-3 mr-1" />
+                                                    Cấp HLV
                                                 </Button>
-                                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleEditClick(team)}>
-                                                    <Pencil className="w-4 h-4 text-blue-600" />
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-7 text-xs"
+                                                    onClick={() => handleEditClick(team)}
+                                                >
+                                                    <Pencil className="w-3 h-3 mr-1" />
+                                                    Sửa
                                                 </Button>
-                                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleDelete(team.id)}>
-                                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => handleDelete(team.id)}
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -306,16 +340,17 @@ export const AdminTeamPage = () => {
                                 ))}
                             </TableBody>
                         </Table>
-                    </CardContent>
+                    </div>
                 </Card>
-            </div>
+            )}
 
             {/* --- MODAL XEM CẦU THỦ --- */}
             <Dialog open={showPlayerModal} onOpenChange={setShowPlayerModal}>
                 <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
                     <DialogHeader className="p-6 pb-2 border-b bg-muted/20">
                         <DialogTitle className="flex items-center gap-2">
-                            👥 Đội hình: <span className="text-primary uppercase">{selectedTeam?.name}</span>
+                            <Users className="w-5 h-5" />
+                            Đội hình: <span className="text-primary uppercase">{selectedTeam?.name}</span>
                         </DialogTitle>
                     </DialogHeader>
                     <div className="overflow-y-auto flex-1 p-0">
@@ -469,7 +504,10 @@ export const AdminTeamPage = () => {
                             />
                         </div>
                         <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded border border-blue-100">
-                            <p className="font-bold mb-1">📋 Định dạng CSV mẫu:</p>
+                            <p className="font-bold mb-1 flex items-center gap-2">
+                                <ClipboardList className="w-4 h-4" />
+                                Định dạng CSV mẫu:
+                            </p>
                             <pre className="whitespace-pre-wrap font-mono text-xs">
 Tên Đội,Mã (Short),Sân Vận Động,HLV Trưởng{'\n'}
 Liverpool FC,LIV,Anfield,Arne Slot{'\n'}

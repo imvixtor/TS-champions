@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { matchService, playerService } from '../../services';
 import { getImageUrl } from '../../utils';
+import { Play, Flag, Home, Plane, RefreshCw, ArrowDown, CheckCircle, Circle, Square, X, Loader2 } from "lucide-react";
 
 export const MatchConsolePage = () => {
     const { id } = useParams();
@@ -166,7 +167,12 @@ export const MatchConsolePage = () => {
         }
     };
 
-    if (loading || !match) return <div className="text-center py-20 font-bold text-gray-500">⏳ Đang tải Console...</div>;
+    if (loading || !match) return (
+        <div className="text-center py-20 font-bold text-gray-500 flex flex-col items-center gap-4">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <span>Đang tải Console...</span>
+        </div>
+    );
 
     // Phân tách đội hình
     const homeSquad = getSquad(homePlayers);
@@ -202,12 +208,14 @@ export const MatchConsolePage = () => {
                         <div className="mt-2">
                             {match.status === 'SCHEDULED' && (
                                 <button onClick={handleStartMatch} className="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded shadow-lg animate-pulse">
-                                    ▶ BẮT ĐẦU TRẬN ĐẤU
+                                    <Play className="w-4 h-4 inline mr-1" />
+                                    BẮT ĐẦU TRẬN ĐẤU
                                 </button>
                             )}
                             {match.status === 'IN_PROGRESS' && (
                                 <button onClick={handleFinishMatch} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2 rounded shadow-lg border border-red-400">
-                                    🏁 KẾT THÚC TRẬN ĐẤU
+                                    <Flag className="w-4 h-4 inline mr-1" />
+                                    KẾT THÚC TRẬN ĐẤU
                                 </button>
                             )}
                             {match.status === 'FINISHED' && (
@@ -232,10 +240,11 @@ export const MatchConsolePage = () => {
                 {/* === CỘT ĐỘI NHÀ === */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="bg-blue-700 text-white p-3 font-bold flex justify-between items-center shadow-md">
-                        <span>🏠 HOME SQUAD</span>
+                        <span className="flex items-center gap-2"><Home className="w-4 h-4" /> HOME SQUAD</span>
                         {match.status === 'IN_PROGRESS' && (
                             <button onClick={() => openSubModal(match.homeTeamId)} className="bg-white text-blue-700 px-3 py-1 rounded text-xs font-black hover:bg-blue-50 shadow transition">
-                                ⇄ THAY NGƯỜI
+                                <RefreshCw className="w-3 h-3 inline mr-1" />
+                                THAY NGƯỜI
                             </button>
                         )}
                     </div>
@@ -254,9 +263,15 @@ export const MatchConsolePage = () => {
                                     {/* Nút thao tác nhanh */}
                                     {match.status === 'IN_PROGRESS' && (
                                         <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleQuickEvent('GOAL', match.homeTeamId, p)} className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-green-600 shadow">⚽</button>
-                                            <button onClick={() => handleQuickEvent('YELLOW_CARD', match.homeTeamId, p)} className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded hover:bg-yellow-500 shadow">🟨</button>
-                                            <button onClick={() => handleQuickEvent('RED_CARD', match.homeTeamId, p)} className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-red-600 shadow">🟥</button>
+                                                    <button onClick={() => handleQuickEvent('GOAL', match.homeTeamId, p)} className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-green-600 shadow flex items-center justify-center" title="Bàn thắng">
+                                                        <Circle className="w-3 h-3 fill-white" />
+                                                    </button>
+                                                    <button onClick={() => handleQuickEvent('YELLOW_CARD', match.homeTeamId, p)} className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded hover:bg-yellow-500 shadow flex items-center justify-center" title="Thẻ vàng">
+                                                        <Square className="w-3 h-3 fill-white" />
+                                                    </button>
+                                                    <button onClick={() => handleQuickEvent('RED_CARD', match.homeTeamId, p)} className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-red-600 shadow flex items-center justify-center" title="Thẻ đỏ">
+                                                        <Square className="w-3 h-3 fill-white" />
+                                                    </button>
                                         </div>
                                     )}
                                 </div>
@@ -281,10 +296,11 @@ export const MatchConsolePage = () => {
                 {/* === CỘT ĐỘI KHÁCH === */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="bg-red-700 text-white p-3 font-bold flex justify-between items-center shadow-md">
-                        <span>✈️ AWAY SQUAD</span>
+                        <span className="flex items-center gap-2"><Plane className="w-4 h-4" /> AWAY SQUAD</span>
                         {match.status === 'IN_PROGRESS' && (
                             <button onClick={() => openSubModal(match.awayTeamId)} className="bg-white text-red-700 px-3 py-1 rounded text-xs font-black hover:bg-red-50 shadow transition">
-                                ⇄ THAY NGƯỜI
+                                <RefreshCw className="w-3 h-3 inline mr-1" />
+                                THAY NGƯỜI
                             </button>
                         )}
                     </div>
@@ -303,9 +319,15 @@ export const MatchConsolePage = () => {
                                     {/* Nút thao tác nhanh */}
                                     {match.status === 'IN_PROGRESS' && (
                                         <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleQuickEvent('GOAL', match.awayTeamId, p)} className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-green-600 shadow">⚽</button>
-                                            <button onClick={() => handleQuickEvent('YELLOW_CARD', match.awayTeamId, p)} className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded hover:bg-yellow-500 shadow">🟨</button>
-                                            <button onClick={() => handleQuickEvent('RED_CARD', match.awayTeamId, p)} className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-red-600 shadow">🟥</button>
+                                            <button onClick={() => handleQuickEvent('GOAL', match.awayTeamId, p)} className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-green-600 shadow flex items-center justify-center" title="Bàn thắng">
+                                                <Circle className="w-3 h-3 fill-white" />
+                                            </button>
+                                            <button onClick={() => handleQuickEvent('YELLOW_CARD', match.awayTeamId, p)} className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded hover:bg-yellow-500 shadow flex items-center justify-center" title="Thẻ vàng">
+                                                <Square className="w-3 h-3 fill-white" />
+                                            </button>
+                                            <button onClick={() => handleQuickEvent('RED_CARD', match.awayTeamId, p)} className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded hover:bg-red-600 shadow flex items-center justify-center" title="Thẻ đỏ">
+                                                <Square className="w-3 h-3 fill-white" />
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -334,16 +356,22 @@ export const MatchConsolePage = () => {
                         {/* Header Modal */}
                         <div className="bg-slate-900 text-white p-4 text-center relative shadow-md">
                             <h3 className="font-bold text-lg uppercase flex items-center justify-center gap-2">
-                                🔄 Thay người: <span className="text-yellow-400">{modalTeamName}</span>
+                                <RefreshCw className="w-5 h-5 inline mr-2" />
+                                Thay người: <span className="text-yellow-400">{modalTeamName}</span>
                             </h3>
-                            <button onClick={() => setShowSubModal(false)} className="absolute right-4 top-4 text-gray-400 hover:text-white font-bold text-xl">✕</button>
+                            <button onClick={() => setShowSubModal(false)} className="absolute right-4 top-4 text-gray-400 hover:text-white font-bold">
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
 
                         {/* Body - Grid 2 Cột */}
                         <div className="p-4 grid grid-cols-2 gap-4 flex-1 overflow-y-auto bg-gray-100">
                             {/* Cột NGƯỜI RA */}
                             <div className="bg-white p-3 rounded-xl shadow-sm">
-                                <h4 className="text-center font-black text-red-600 mb-3 uppercase text-sm border-b pb-2">🔻 Người Ra (Out)</h4>
+                                <h4 className="text-center font-black text-red-600 mb-3 uppercase text-sm border-b pb-2 flex items-center justify-center gap-1">
+                                    <ArrowDown className="w-4 h-4" />
+                                    Người Ra (Out)
+                                </h4>
                                 <div className="space-y-2">
                                     {modalSquad.onPitch.map(p => (
                                         <div key={p.id} onClick={() => setPlayerOut(p)}
@@ -358,7 +386,10 @@ export const MatchConsolePage = () => {
 
                             {/* Cột NGƯỜI VÀO */}
                             <div className="bg-white p-3 rounded-xl shadow-sm">
-                                <h4 className="text-center font-black text-green-600 mb-3 uppercase text-sm border-b pb-2">💚 Người Vào (In)</h4>
+                                <h4 className="text-center font-black text-green-600 mb-3 uppercase text-sm border-b pb-2 flex items-center justify-center gap-1">
+                                    <CheckCircle className="w-4 h-4" />
+                                    Người Vào (In)
+                                </h4>
                                 <div className="space-y-2">
                                     {modalSquad.bench.map(p => (
                                         <div key={p.id} onClick={() => setPlayerIn(p)}

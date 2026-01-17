@@ -6,7 +6,7 @@ import { getImageUrl } from '../../utils';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import {
     Select,
     SelectContent,
@@ -468,7 +468,10 @@ export const AdminTournamentPage = () => {
                             {Object.entries(groupedStandings).sort().map(([groupName, teams]) => (
                                 <Card key={groupName} className="overflow-hidden hover:shadow-md transition-shadow">
                                     <div className="bg-slate-800 text-white p-3 font-bold flex justify-between items-center">
-                                        <span className="flex items-center gap-2 text-lg">🏆 {groupName}</span>
+                                        <span className="flex items-center gap-2 text-lg">
+                                            <Trophy className="w-5 h-5" />
+                                            {groupName}
+                                        </span>
                                         <Badge variant="secondary" className="bg-slate-600 text-slate-100 border-none">
                                             {teams.length} Teams
                                         </Badge>
@@ -517,87 +520,94 @@ export const AdminTournamentPage = () => {
 
     // ================== GIAO DIỆN DANH SÁCH (MẶC ĐỊNH = LIST) ==================
     return (
-        <div className="space-y-6 w-full p-4 animate-fade-in-up">
+        <div className="min-h-screen w-full p-3 sm:p-4 md:p-6 animate-fade-in-up pb-10 max-w-[1920px] mx-auto">
             {/* HEADER VÀ NÚT THÊM MỚI */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Quản Lý Giải Đấu</h2>
-                    <p className="text-muted-foreground">Quản lý các giải đấu đang diễn ra.</p>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 pb-4 border-b">
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Quản Lý Giải Đấu</h2>
+                    <p className="text-sm sm:text-base text-muted-foreground">Quản lý các giải đấu đang diễn ra.</p>
                 </div>
-                <Button onClick={() => {
-                    handleCancelEdit();
-                    setIsFormModalOpen(true);
-                }} className="bg-blue-600 hover:bg-blue-700">
+                <Button 
+                    onClick={() => {
+                        handleCancelEdit();
+                        setIsFormModalOpen(true);
+                    }} 
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
+                >
                     <Trophy className="w-4 h-4 mr-2" />
-                    Tạo Giải Đấu Mới
+                    <span className="hidden sm:inline">Tạo Giải Đấu Mới</span>
+                    <span className="sm:hidden">Tạo</span>
                 </Button>
             </div>
 
             {/* DANH SÁCH GIẢI ĐẤU */}
-            <div className="w-full">
-                <Card className="w-full h-full">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <div className="space-y-1">
-                            <CardTitle>Danh Sách Giải Đấu</CardTitle>
-                            <CardDescription>Quản lý các giải đấu đang diễn ra.</CardDescription>
-                        </div>
-                        <Badge variant="outline">Total: {tournaments.length}</Badge>
-                    </CardHeader>
-                    <CardContent>
-                        <ScrollArea className="h-[600px] pr-4">
-                            {tournaments.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                                    <Trophy className="w-12 h-12 mb-2 opacity-20" />
-                                    <p>Chưa có giải đấu nào.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {tournaments.map(t => (
-                                        <div key={t.id} onClick={() => handleManage(t)}
-                                            className={`flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer group
-                                        ${editingId === t.id ? 'border-orange-400 bg-orange-50/50 ring-1 ring-orange-200' : 'hover:border-blue-300 hover:shadow-md bg-white'}`}
-                                        >
-                                            <div className="flex items-center gap-4 mb-3 md:mb-0">
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg border
-                                                ${editingId === t.id ? 'bg-orange-100 text-orange-600 border-orange-200' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                                                    {t.name.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <div className={`font-bold text-lg transition ${editingId === t.id ? 'text-orange-700' : 'text-slate-800 group-hover:text-blue-600'}`}>
-                                                        {t.name}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                                                        <Badge variant="secondary" className="font-normal text-[10px] h-5">Mùa {t.season}</Badge>
-                                                        <span>{t.startDate} ➝ {t.endDate}</span>
-                                                    </div>
-                                                </div>
+            {tournaments.length === 0 ? (
+                <div className="text-center py-20 text-muted-foreground">
+                    <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-semibold">Chưa có giải đấu nào</p>
+                    <p className="text-sm mt-2">Hãy tạo giải đấu mới để bắt đầu</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {tournaments.map(t => (
+                        <Card 
+                            key={t.id} 
+                            onClick={() => handleManage(t)}
+                            className={`cursor-pointer transition-all hover:shadow-md group
+                                ${editingId === t.id ? 'border-orange-400 bg-orange-50/50 ring-1 ring-orange-200' : 'hover:border-blue-300'}`}
+                        >
+                            <CardContent className="p-4">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg border flex-shrink-0
+                                            ${editingId === t.id ? 'bg-orange-100 text-orange-600 border-orange-200' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                            {t.name.charAt(0)}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className={`font-bold text-lg transition ${editingId === t.id ? 'text-orange-700' : 'text-slate-800 group-hover:text-blue-600'}`}>
+                                                {t.name}
                                             </div>
-
-                                            <div className="flex items-center gap-2 pl-16 md:pl-0">
-                                                <Button
-                                                    size="icon" variant="ghost" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                    onClick={(e) => handleEditClick(t, e)} title="Sửa"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={(e) => handleDeleteClick(t.id, e)} title="Xóa"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                                <Button size="sm" className="ml-2 bg-blue-600 hover:bg-blue-700">
-                                                    Quản lý <ChevronRight className="w-4 h-4 ml-1" />
-                                                </Button>
+                                            <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1 flex-wrap">
+                                                <Badge variant="secondary" className="font-normal text-[10px] h-5">Mùa {t.season}</Badge>
+                                                <span>{t.startDate} ➝ {t.endDate}</span>
                                             </div>
                                         </div>
-                                    ))}
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs"
+                                            onClick={(e) => handleEditClick(t, e)} 
+                                            title="Sửa"
+                                        >
+                                            <Pencil className="w-3 h-3 mr-1" />
+                                            Sửa
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            onClick={(e) => handleDeleteClick(t.id, e)} 
+                                            title="Xóa"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                        <Button 
+                                            size="sm" 
+                                            className="h-7 text-xs bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
+                                        >
+                                            Quản lý <ChevronRight className="w-3 h-3 ml-1" />
+                                        </Button>
+                                    </div>
                                 </div>
-                            )}
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-            </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
 
             {/* MODAL TẠO/SỬA GIẢI ĐẤU */}
             <Dialog open={isFormModalOpen} onOpenChange={(open) => {

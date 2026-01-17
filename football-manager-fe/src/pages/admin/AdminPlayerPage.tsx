@@ -6,7 +6,7 @@ import { getImageUrl, exportToCSV, readCSVFile } from '../../utils';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import {
     Select,
     SelectContent,
@@ -31,7 +31,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, Trash2, UserPlus, Pencil, Download, Upload } from "lucide-react"
+import { Loader2, Trash2, UserPlus, Pencil, Download, Upload, ClipboardList, Lightbulb, Users, Info } from "lucide-react"
 
 export const AdminPlayerPage = () => {
     // State Form
@@ -247,17 +247,17 @@ export const AdminPlayerPage = () => {
     };
 
     return (
-        <div className="space-y-6 w-full p-4 animate-fade-in-up">
+        <div className="min-h-screen w-full p-3 sm:p-4 md:p-6 animate-fade-in-up pb-10 max-w-[1920px] mx-auto">
 
             {/* HEADER VÀ NÚT THÊM MỚI */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Quản Lý Cầu Thủ</h2>
-                    <p className="text-muted-foreground">Xem và quản lý danh sách cầu thủ theo đội bóng.</p>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 pb-4 border-b">
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Quản Lý Cầu Thủ</h2>
+                    <p className="text-sm sm:text-base text-muted-foreground">Xem và quản lý danh sách cầu thủ theo đội bóng.</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
                     <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-                        <SelectTrigger className="w-[280px]">
+                        <SelectTrigger className="w-full sm:w-[200px] lg:w-[240px]">
                             <SelectValue placeholder="Chọn đội..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -266,112 +266,106 @@ export const AdminPlayerPage = () => {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Button variant="outline" onClick={handleExportCSV} disabled={!selectedTeamId || players.length === 0}>
+                    <Button variant="outline" onClick={handleExportCSV} disabled={!selectedTeamId || players.length === 0} size="sm">
                         <Download className="w-4 h-4 mr-2" />
-                        Xuất CSV
+                        <span className="hidden sm:inline">Xuất CSV</span>
+                        <span className="sm:hidden">Xuất</span>
                     </Button>
-                    <Button variant="outline" onClick={() => setShowImportModal(true)} disabled={!selectedTeamId}>
+                    <Button variant="outline" onClick={() => setShowImportModal(true)} disabled={!selectedTeamId} size="sm">
                         <Upload className="w-4 h-4 mr-2" />
-                        Nhập CSV
+                        <span className="hidden sm:inline">Nhập CSV</span>
+                        <span className="sm:hidden">Nhập</span>
                     </Button>
-                    <Button onClick={() => setIsFormModalOpen(true)} className="bg-green-600 hover:bg-green-700">
+                    <Button onClick={() => setIsFormModalOpen(true)} size="sm" className="bg-green-600 hover:bg-green-700 whitespace-nowrap">
                         <UserPlus className="w-4 h-4 mr-2" />
-                        Thêm Cầu Thủ
+                        <span className="hidden sm:inline">Thêm Cầu Thủ</span>
+                        <span className="sm:hidden">Thêm</span>
                     </Button>
                 </div>
             </div>
 
             {/* DANH SÁCH CẦU THỦ */}
-            <div className="w-full">
-                <Card className="w-full h-full">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <div className="space-y-1">
-                            <CardTitle>Danh Sách Cầu Thủ</CardTitle>
-                            <CardDescription>
-                                Đang xem đội hình của <span className="font-bold text-primary">{teams.find(t => String(t.id) === selectedTeamId)?.name}</span>.
-                            </CardDescription>
-                        </div>
-                        <Badge variant="outline" className="text-sm px-3 py-1">Tổng: {players.length}</Badge>
-                    </CardHeader>
-                    <CardContent>
-                        {loadingPlayers ? (
-                            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-                        ) : (
-                            <div className="rounded-md border">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-[80px] text-center">Số</TableHead>
-                                            <TableHead className="w-[80px]">Avatar</TableHead>
-                                            <TableHead>Thông tin</TableHead>
-                                            <TableHead className="text-right">Hành động</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {players.length > 0 ? (
-                                            players.map((p) => (
-                                                <TableRow key={p.id}>
-                                                    <TableCell className="text-center">
-                                                        <div className="bg-slate-100 text-slate-700 font-black text-lg h-10 w-8 mx-auto flex items-center justify-center rounded border border-slate-200 shadow-sm font-mono">
-                                                            {p.shirtNumber}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <img
-                                                            src={getImageUrl(p.avatar)}
-                                                            className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                                                            alt={p.name}
-                                                            onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="font-bold text-base">{p.name}</div>
-                                                        <Badge variant="secondary" className={`mt-1 text-[10px] pointer-events-none
-                                                            ${p.position === 'GK' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                                                p.position === 'FW' ? 'bg-red-50 text-red-700 border-red-200' :
-                                                                    p.position === 'MF' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}
-                                                        `}>
-                                                            {p.position}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <div className="flex justify-end gap-2">
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                                                                onClick={() => handleEditClick(p)}
-                                                                title="Sửa cầu thủ"
-                                                            >
-                                                                <Pencil className="w-4 h-4" />
-                                                            </Button>
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                                onClick={() => handleDelete(p.id)}
-                                                                title="Xóa cầu thủ"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={4} className="text-center h-40 text-muted-foreground italic">
-                                                    Đội này chưa có cầu thủ nào.
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
-                    </CardContent>
+            {loadingPlayers ? (
+                <div className="flex justify-center py-20">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                </div>
+            ) : !selectedTeamId ? (
+                <div className="text-center py-20 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-base sm:text-lg font-medium">Vui lòng chọn đội bóng để xem danh sách cầu thủ</p>
+                </div>
+            ) : players.length === 0 ? (
+                <div className="text-center py-20 text-muted-foreground">
+                    <UserPlus className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-semibold">Đội này chưa có cầu thủ nào</p>
+                    <p className="text-sm mt-2">Hãy thêm cầu thủ hoặc import từ CSV</p>
+                </div>
+            ) : (
+                <Card className="overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead className="w-[80px] text-center">Số</TableHead>
+                                    <TableHead className="w-[80px]">Avatar</TableHead>
+                                    <TableHead>Thông tin</TableHead>
+                                    <TableHead className="text-right">Thao tác</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {players.map((p) => (
+                                    <TableRow key={p.id} className="hover:bg-muted/30">
+                                        <TableCell className="text-center">
+                                            <div className="bg-slate-100 text-slate-700 font-black text-lg h-10 w-8 mx-auto flex items-center justify-center rounded border border-slate-200 shadow-sm font-mono">
+                                                {p.shirtNumber}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <img
+                                                src={getImageUrl(p.avatar)}
+                                                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                                                alt={p.name}
+                                                onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="font-bold text-base">{p.name}</div>
+                                            <Badge variant="secondary" className={`mt-1 text-[10px] pointer-events-none
+                                                ${p.position === 'GK' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                                    p.position === 'FW' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                        p.position === 'MF' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}
+                                            `}>
+                                                {p.position}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs"
+                                                    onClick={() => handleEditClick(p)}
+                                                >
+                                                    <Pencil className="w-3 h-3 mr-1" />
+                                                    Sửa
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => handleDelete(p.id)}
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </Card>
-            </div>
+            )}
 
             {/* MODAL THÊM/SỬA CẦU THỦ */}
             <Dialog open={isFormModalOpen} onOpenChange={(open) => {
@@ -477,7 +471,10 @@ export const AdminPlayerPage = () => {
                             />
                         </div>
                         <div className="text-xs text-muted-foreground bg-green-50 p-3 rounded border border-green-100">
-                            <p className="font-bold mb-1">📋 Định dạng CSV mẫu:</p>
+                            <p className="font-bold mb-1 flex items-center gap-2">
+                                <ClipboardList className="w-4 h-4" />
+                                Định dạng CSV mẫu:
+                            </p>
                             <pre className="whitespace-pre-wrap font-mono text-xs">
 Tên Cầu Thủ,Số Áo,Vị Trí{'\n'}
 Nguyễn Văn A,10,FW{'\n'}
@@ -485,7 +482,10 @@ Trần Văn B,1,GK{'\n'}
 Lê Văn C,4,{'\n'}
 Phạm Văn D,5,
                             </pre>
-                            <p className="mt-2 text-xs">💡 <strong>Vị Trí:</strong> GK (Thủ môn), DF (Hậu vệ), MF (Tiền vệ), FW (Tiền đạo). <span className="text-orange-600">Có thể để trống.</span></p>
+                            <p className="mt-2 text-xs flex items-start gap-2">
+                                <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span><strong>Vị Trí:</strong> GK (Thủ môn), DF (Hậu vệ), MF (Tiền vệ), FW (Tiền đạo). <span className="text-orange-600">Có thể để trống.</span></span>
+                            </p>
                         </div>
                     </div>
                     {importLoading && (

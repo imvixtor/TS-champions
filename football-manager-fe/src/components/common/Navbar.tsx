@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks';
 import { Button } from "@/components/ui/button"
+import { Circle } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import {
     NavigationMenu,

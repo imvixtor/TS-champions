@@ -2,14 +2,19 @@ import { useEffect, useState } from 'react';
 import { publicService } from '../../../services';
 import type { MatchDetailProps, MatchWithEvents, MatchEvent } from '../../../types';
 import { getImageUrl } from '../../../utils';
+import { Circle, Square, Calendar, Building2, Loader2, X } from "lucide-react";
 
 // Component Icon sự kiện
 const EventIcon = ({ type }: { type: string }) => {
     switch (type) {
-        case 'GOAL': return <span className="text-xl">⚽</span>;
-        case 'YELLOW_CARD': return <span className="text-yellow-500 text-xl">▮</span>;
-        case 'RED_CARD': return <span className="text-red-600 text-xl">▮</span>;
-        default: return <span>•</span>;
+        case 'GOAL': 
+            return <Circle className="w-5 h-5 text-green-600 fill-green-600" />;
+        case 'YELLOW_CARD': 
+            return <Square className="w-5 h-5 text-yellow-500 fill-yellow-500" />;
+        case 'RED_CARD': 
+            return <Square className="w-5 h-5 text-red-600 fill-red-600" />;
+        default: 
+            return <span className="w-2 h-2 rounded-full bg-gray-400" />;
     }
 };
 
@@ -40,12 +45,15 @@ export const MatchDetailModal = ({ matchId, onClose }: MatchDetailProps) => {
             <div className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
                 
                 {/* Nút đóng */}
-                <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white z-10 text-3xl font-bold transition">
-                    &times;
+                <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white z-10 transition">
+                    <X className="w-6 h-6" />
                 </button>
 
                 {loading ? (
-                    <div className="p-12 text-center text-gray-500 font-bold">⏳ Đang tải chi tiết...</div>
+                    <div className="p-12 text-center text-gray-500 font-bold flex flex-col items-center gap-2">
+                        <Loader2 className="w-8 h-8 animate-spin" />
+                        <span>Đang tải chi tiết...</span>
+                    </div>
                 ) : match ? (
                     <>
                         {/* 1. HEADER TỈ SỐ (Banner) */}
@@ -73,9 +81,15 @@ export const MatchDetailModal = ({ matchId, onClose }: MatchDetailProps) => {
                                     </div>
                                     
                                     <div className="text-xs text-blue-200 mt-3 flex items-center gap-2 opacity-80">
-                                        <span>📅 {new Date(match.matchDate).toLocaleDateString()}</span>
+                                        <span className="flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />
+                                            {new Date(match.matchDate).toLocaleDateString()}
+                                        </span>
                                         <span>|</span>
-                                        <span>🏟️ {match.stadium || 'Sân vận động'}</span>
+                                        <span className="flex items-center gap-1">
+                                            <Building2 className="w-3 h-3" />
+                                            {match.stadium || 'Sân vận động'}
+                                        </span>
                                     </div>
                                 </div>
 

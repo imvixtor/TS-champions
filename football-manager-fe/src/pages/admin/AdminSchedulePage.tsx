@@ -23,7 +23,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, Calendar, MapPin, ArrowRightLeft, Trash2, Edit, Gamepad2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Loader2, Calendar, MapPin, ArrowRightLeft, Trash2, Edit, Gamepad2, ArrowUpDown, ArrowUp, ArrowDown, Zap, AlertTriangle, CheckCircle2, XCircle, Info } from "lucide-react"
 import { useNavigate } from 'react-router-dom';
 import {
     Table,
@@ -308,7 +308,10 @@ export const AdminSchedulePage = () => {
                                 <span className="hidden sm:inline">Đang sinh...</span>
                             </>
                         ) : (
-                            <>⚡ Sinh Lịch</>
+                            <>
+                                <Zap className="w-4 h-4 mr-2" />
+                                Sinh Lịch
+                            </>
                         )}
                     </Button>
                     <Button 
@@ -372,7 +375,8 @@ export const AdminSchedulePage = () => {
                 </div>
             ) : !selectedTourId ? (
                 <div className="text-center py-20 text-muted-foreground">
-                    👆 Vui lòng chọn giải đấu để xem lịch thi đấu
+                    <Info className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-base sm:text-lg font-medium">Vui lòng chọn giải đấu để xem lịch thi đấu</p>
                 </div>
             ) : matches.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground">
