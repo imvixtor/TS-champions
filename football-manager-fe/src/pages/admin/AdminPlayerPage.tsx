@@ -170,7 +170,7 @@ export const AdminPlayerPage = () => {
             const csvData = await readCSVFile(file);
             
             // Validate CSV format
-            const requiredFields = ['Tên Cầu Thủ', 'Số Áo', 'Vị Trí'];
+            const requiredFields = ['Tên Cầu Thủ', 'Số Áo'];
             const missingFields = requiredFields.filter(field => !csvData[0] || !(field in csvData[0]));
             if (missingFields.length > 0) {
                 alert(`❌ File CSV thiếu các cột: ${missingFields.join(', ')}\n\nCác cột bắt buộc: ${requiredFields.join(', ')}`);
@@ -191,19 +191,29 @@ export const AdminPlayerPage = () => {
                         continue;
                     }
 
-                    const position = (row['Vị Trí'] || '').toUpperCase();
-                    if (!['GK', 'DF', 'MF', 'FW'].includes(position)) {
-                        console.error(`Vị trí không hợp lệ: ${row['Vị Trí']}`);
-                        errorCount++;
-                        continue;
+                    // Vị trí là tùy chọn, có thể blank
+                    let position = (row['Vị Trí'] || '').trim().toUpperCase();
+                    
+                    // Nếu vị trí không rỗng, validate nó phải là một trong các giá trị hợp lệ
+                    if (position && !['GK', 'DF', 'MF', 'FW'].includes(position)) {
+                        console.warn(`Vị trí không hợp lệ: ${row['Vị Trí']}. Sẽ để vị trí trống.`);
+                        position = ''; // Đặt về rỗng nếu không hợp lệ
                     }
 
-                    await playerService.createPlayer({
+                    // Xây dựng request data - position có thể null nếu để trống
+                    const playerData: {
+                        name: string;
+                        shirtNumber: number;
+                        position: string | null;
+                        teamId: number;
+                    } = {
                         name: row['Tên Cầu Thủ'] || '',
                         shirtNumber,
-                        position,
+                        position: (position && ['GK', 'DF', 'MF', 'FW'].includes(position)) ? position : null,
                         teamId: Number(selectedTeamId)
-                    });
+                    };
+
+                    await playerService.createPlayer(playerData);
                     successCount++;
                 } catch (error) {
                     console.error(`Lỗi import cầu thủ ${row['Tên Cầu Thủ']}:`, error);
@@ -447,7 +457,7 @@ export const AdminPlayerPage = () => {
                             Nhập Cầu Thủ từ CSV
                         </DialogTitle>
                         <DialogDescription>
-                            Chọn file CSV để import danh sách cầu thủ vào đội <span className="font-bold">{teams.find(t => String(t.id) === selectedTeamId)?.name}</span>. File CSV cần có các cột: Tên Cầu Thủ, Số Áo, Vị Trí (GK/DF/MF/FW).
+                            Chọn file CSV để import danh sách cầu thủ vào đội <span className="font-bold">{teams.find(t => String(t.id) === selectedTeamId)?.name}</span>. File CSV cần có các cột: Tên Cầu Thủ, Số Áo (bắt buộc), Vị Trí (tùy chọn: GK/DF/MF/FW hoặc để trống).
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -472,9 +482,10 @@ export const AdminPlayerPage = () => {
 Tên Cầu Thủ,Số Áo,Vị Trí{'\n'}
 Nguyễn Văn A,10,FW{'\n'}
 Trần Văn B,1,GK{'\n'}
-Lê Văn C,4,DF
+Lê Văn C,4,{'\n'}
+Phạm Văn D,5,
                             </pre>
-                            <p className="mt-2 text-xs">💡 <strong>Vị Trí:</strong> GK (Thủ môn), DF (Hậu vệ), MF (Tiền vệ), FW (Tiền đạo)</p>
+                            <p className="mt-2 text-xs">💡 <strong>Vị Trí:</strong> GK (Thủ môn), DF (Hậu vệ), MF (Tiền vệ), FW (Tiền đạo). <span className="text-orange-600">Có thể để trống.</span></p>
                         </div>
                     </div>
                     {importLoading && (

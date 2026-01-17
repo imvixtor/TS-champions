@@ -14,6 +14,6 @@ export interface Player {
 export interface CreatePlayerRequest {
     name: string;
     shirtNumber: number;
-    position: string;
+    position: string | null; // Có thể null nếu để trống
     teamId: number;
 }
