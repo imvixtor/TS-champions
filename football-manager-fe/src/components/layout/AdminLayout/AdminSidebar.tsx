@@ -33,15 +33,16 @@ export function AdminSidebar() {
             url: "/admin/tournaments",
             icon: Trophy,
         },
-        {
-            title: "Quản lý Trận đấu",
-            url: "/admin/matches",
-            icon: Target, // Changed from SoccerBall (not in Lucide) to Target or similar
-        },
+
         {
             title: "Lịch Thi Đấu",
             url: "/admin/schedule",
             icon: Calendar,
+        },
+        {
+            title: "Quản lý Trận đấu",
+            url: "/admin/matches",
+            icon: Target, // Changed from SoccerBall (not in Lucide) to Target or similar
         },
         {
             title: "Quản lý Đội bóng",
