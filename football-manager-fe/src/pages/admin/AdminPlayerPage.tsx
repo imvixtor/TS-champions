@@ -6,7 +6,7 @@ import { getImageUrl, exportToCSV, readCSVFile } from '../../utils';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
     Select,
     SelectContent,
@@ -14,14 +14,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import {
     Dialog,
@@ -301,34 +293,22 @@ export const AdminPlayerPage = () => {
                     <p className="text-sm mt-2">Hãy thêm cầu thủ hoặc import từ CSV</p>
                 </div>
             ) : (
-                <Card className="overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent">
-                                    <TableHead className="w-[80px] text-center">Số</TableHead>
-                                    <TableHead className="w-[80px]">Avatar</TableHead>
-                                    <TableHead>Thông tin</TableHead>
-                                    <TableHead className="text-right">Thao tác</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {players.map((p) => (
-                                    <TableRow key={p.id} className="hover:bg-muted/30">
-                                        <TableCell className="text-center">
-                                            <div className="bg-slate-100 text-slate-700 font-black text-lg h-10 w-8 mx-auto flex items-center justify-center rounded border border-slate-200 shadow-sm font-mono">
-                                                {p.shirtNumber}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <img
-                                                src={getImageUrl(p.avatar)}
-                                                className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                                                alt={p.name}
-                                                onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
+                <div className="space-y-3">
+                    {players.map((p) => (
+                        <Card key={p.id} className="transition-all hover:shadow-md group">
+                            <CardContent className="p-4">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-slate-100 text-slate-700 font-black text-lg h-12 w-12 flex items-center justify-center rounded border border-slate-200 shadow-sm font-mono flex-shrink-0">
+                                            {p.shirtNumber}
+                                        </div>
+                                        <img
+                                            src={getImageUrl(p.avatar)}
+                                            className="w-12 h-12 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                                            alt={p.name}
+                                            onError={(e) => e.currentTarget.src = 'https://placehold.co/48'}
+                                        />
+                                        <div className="min-w-0 flex-1">
                                             <div className="font-bold text-base">{p.name}</div>
                                             <Badge variant="secondary" className={`mt-1 text-[10px] pointer-events-none
                                                 ${p.position === 'GK' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
@@ -337,34 +317,33 @@ export const AdminPlayerPage = () => {
                                             `}>
                                                 {p.position}
                                             </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-7 text-xs"
-                                                    onClick={() => handleEditClick(p)}
-                                                >
-                                                    <Pencil className="w-3 h-3 mr-1" />
-                                                    Sửa
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDelete(p.id)}
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </Card>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-shrink-0 pl-16 md:pl-0">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs"
+                                            onClick={() => handleEditClick(p)}
+                                        >
+                                            <Pencil className="w-3 h-3 mr-1" />
+                                            Sửa
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            onClick={() => handleDelete(p.id)}
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             )}
 
             {/* MODAL THÊM/SỬA CẦU THỦ */}

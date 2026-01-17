@@ -6,7 +6,7 @@ import { getImageUrl } from '../../utils';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
     Select,
     SelectContent,
@@ -25,14 +25,6 @@ import {
 } from "@/components/ui/dialog"
 import { Loader2, Calendar, MapPin, ArrowRightLeft, Trash2, Edit, Gamepad2, ArrowUpDown, ArrowUp, ArrowDown, Zap, AlertTriangle, CheckCircle2, XCircle, Info } from "lucide-react"
 import { useNavigate } from 'react-router-dom';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 
 export const AdminSchedulePage = () => {
     const navigate = useNavigate();
@@ -385,107 +377,61 @@ export const AdminSchedulePage = () => {
                     <p className="text-sm mt-2">Hãy tạo trận đấu thủ công hoặc sinh lịch tự động</p>
                 </div>
             ) : (
-                <Card className="overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent">
-                                    <TableHead 
-                                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                                        onClick={() => handleSort('date')}
-                                    >
-                                        <div className="flex items-center">
-                                            Ngày giờ
-                                            {getSortIcon('date')}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead 
-                                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                                        onClick={() => handleSort('round')}
-                                    >
-                                        <div className="flex items-center">
-                                            Vòng đấu
-                                            {getSortIcon('round')}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead>Đội nhà</TableHead>
-                                    <TableHead className="text-center w-16">VS</TableHead>
-                                    <TableHead>Đội khách</TableHead>
-                                    <TableHead 
-                                        className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                                        onClick={() => handleSort('status')}
-                                    >
-                                        <div className="flex items-center">
-                                            Trạng thái
-                                            {getSortIcon('status')}
-                                        </div>
-                                    </TableHead>
-                                    <TableHead>Sân đấu</TableHead>
-                                    <TableHead className="text-right">Thao tác</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {sortedMatches.map((match) => (
-                                    <TableRow key={match.id} className="hover:bg-muted/30">
-                                        <TableCell className="font-medium">
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-sm">
-                                                    {new Date(match.matchDate).toLocaleDateString('vi-VN', { 
-                                                        day: '2-digit', 
-                                                        month: '2-digit', 
-                                                        year: 'numeric' 
-                                                    })}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {new Date(match.matchDate).toLocaleTimeString('vi-VN', { 
-                                                        hour: '2-digit', 
-                                                        minute: '2-digit' 
-                                                    })}
-                                                </span>
+                <div className="space-y-3">
+                    {sortedMatches.map((match) => (
+                        <Card key={match.id} className="transition-all hover:shadow-md group">
+                            <CardContent className="p-4">
+                                <div className="flex flex-col lg:flex-row gap-4">
+                                    {/* LEFT: Thông tin thời gian và vòng đấu */}
+                                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                                        <div className="flex flex-col gap-1 min-w-[100px]">
+                                            <div className="font-medium text-sm">
+                                                {new Date(match.matchDate).toLocaleDateString('vi-VN', { 
+                                                    day: '2-digit', 
+                                                    month: '2-digit', 
+                                                    year: 'numeric' 
+                                                })}
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-sm font-medium">{match.roundName || 'Chưa xếp vòng'}</span>
-                                                {match.groupName && (
-                                                    <Badge variant="outline" className="text-[10px] w-fit text-orange-600 border-orange-300">
-                                                        {match.groupName}
-                                                    </Badge>
-                                                )}
+                                            <div className="text-xs text-muted-foreground">
+                                                {new Date(match.matchDate).toLocaleTimeString('vi-VN', { 
+                                                    hour: '2-digit', 
+                                                    minute: '2-digit' 
+                                                })}
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <img
-                                                    src={getImageUrl(match.homeLogo)}
-                                                    className="w-8 h-8 object-contain flex-shrink-0"
-                                                    alt={match.homeTeam}
-                                                    onError={(e) => e.currentTarget.src = 'https://placehold.co/32'}
-                                                />
-                                                <span className="font-medium text-sm">{match.homeTeam}</span>
+                                            <div className="flex items-center gap-1 mt-1">
+                                                <MapPin className="w-3 h-3 text-muted-foreground" />
+                                                <span className="text-xs text-muted-foreground truncate">{match.stadium || 'Chưa có sân'}</span>
                                             </div>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <div className="font-black text-base">
+                                        </div>
+                                        <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                            <span className="text-sm font-medium">{match.roundName || 'Chưa xếp vòng'}</span>
+                                            {match.groupName && (
+                                                <Badge variant="outline" className="text-[10px] w-fit text-orange-600 border-orange-300">
+                                                    {match.groupName}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* MIDDLE: Đội nhà vs Đội khách */}
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            <img
+                                                src={getImageUrl(match.homeLogo)}
+                                                className="w-10 h-10 object-contain flex-shrink-0"
+                                                alt={match.homeTeam}
+                                                onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
+                                            />
+                                            <span className="font-medium text-sm truncate">{match.homeTeam}</span>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                                            <div className="font-black text-lg">
                                                 {match.status === 'SCHEDULED' ? (
                                                     <span className="text-muted-foreground">VS</span>
                                                 ) : (
                                                     <span>{match.homeScore} - {match.awayScore}</span>
                                                 )}
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2 justify-end">
-                                                <span className="font-medium text-sm">{match.awayTeam}</span>
-                                                <img
-                                                    src={getImageUrl(match.awayLogo)}
-                                                    className="w-8 h-8 object-contain flex-shrink-0"
-                                                    alt={match.awayTeam}
-                                                    onError={(e) => e.currentTarget.src = 'https://placehold.co/32'}
-                                                />
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
                                             {match.status === 'SCHEDULED' && (
                                                 <Badge variant="secondary" className="text-xs">SẮP ĐÁ</Badge>
                                             )}
@@ -495,54 +441,58 @@ export const AdminSchedulePage = () => {
                                             {match.status === 'FINISHED' && (
                                                 <Badge className="text-xs bg-slate-800">FT</Badge>
                                             )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                                <MapPin className="w-3 h-3" />
-                                                <span className="truncate max-w-[150px]">{match.stadium || 'Chưa có sân'}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center justify-end gap-2">
-                                                {match.status !== 'FINISHED' && (
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                        className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
-                                                        onClick={() => navigate('/admin/matches', { state: { matchId: match.id } })}
-                                                    >
-                                                        <Gamepad2 className="w-3 h-3 mr-1" />
-                                                        Console
-                                                    </Button>
-                                                )}
-                                                {match.status === 'SCHEDULED' && (
-                                                    <>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="h-7 text-xs"
-                                                            onClick={() => openEditModal(match)}
-                                                        >
-                                                            <Edit className="w-3 h-3" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                            onClick={() => handleDeleteMatch(match.id)}
-                                                        >
-                                                            <Trash2 className="w-3 h-3" />
-                                                        </Button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </Card>
+                                        </div>
+                                        <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+                                            <span className="font-medium text-sm truncate">{match.awayTeam}</span>
+                                            <img
+                                                src={getImageUrl(match.awayLogo)}
+                                                className="w-10 h-10 object-contain flex-shrink-0"
+                                                alt={match.awayTeam}
+                                                onError={(e) => e.currentTarget.src = 'https://placehold.co/40'}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* RIGHT: Action buttons */}
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {match.status !== 'FINISHED' && (
+                                            <Button
+                                                variant="default"
+                                                size="sm"
+                                                className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                                                onClick={() => navigate('/admin/matches', { state: { matchId: match.id } })}
+                                            >
+                                                <Gamepad2 className="w-3 h-3 mr-1" />
+                                                Console
+                                            </Button>
+                                        )}
+                                        {match.status === 'SCHEDULED' && (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs"
+                                                    onClick={() => openEditModal(match)}
+                                                >
+                                                    <Edit className="w-3 h-3 mr-1" />
+                                                    Sửa
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => handleDeleteMatch(match.id)}
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             )}
 
             {/* MODAL TẠO TRẬN ĐẤU MỚI */}

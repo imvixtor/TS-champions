@@ -5,7 +5,7 @@ import { getImageUrl, exportToCSV, readCSVFile } from '../../utils';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
     Table,
     TableBody,
@@ -260,29 +260,20 @@ export const AdminTeamPage = () => {
                     <p className="text-sm mt-2">Hãy thêm đội bóng hoặc import từ CSV</p>
                 </div>
             ) : (
-                <Card className="overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent">
-                                    <TableHead className="w-[80px] text-center">Logo</TableHead>
-                                    <TableHead>Thông tin đội bóng</TableHead>
-                                    <TableHead className="text-right">Thao tác</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {teams.map((team) => (
-                                    <TableRow key={team.id} className="hover:bg-muted/30">
-                                        <TableCell className="text-center p-2">
-                                            <img
-                                                src={getImageUrl(team.logo)}
-                                                className="w-12 h-12 object-contain mx-auto"
-                                                alt={team.name}
-                                                onError={(e) => e.currentTarget.src = 'https://placehold.co/50'}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="font-bold text-base flex items-center gap-2">
+                <div className="space-y-3">
+                    {teams.map((team) => (
+                        <Card key={team.id} className="transition-all hover:shadow-md group">
+                            <CardContent className="p-4">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <img
+                                            src={getImageUrl(team.logo)}
+                                            className="w-12 h-12 object-contain flex-shrink-0"
+                                            alt={team.name}
+                                            onError={(e) => e.currentTarget.src = 'https://placehold.co/48'}
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="font-bold text-base flex items-center gap-2 flex-wrap">
                                                 {team.name}
                                                 <Badge variant="secondary" className="text-xs font-normal">{team.shortName}</Badge>
                                             </div>
@@ -296,52 +287,51 @@ export const AdminTeamPage = () => {
                                                     {team.coachName || 'N/A'}
                                                 </span>
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center justify-end gap-2 flex-wrap">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="h-7 text-xs"
-                                                    onClick={() => handleViewPlayers(team)}
-                                                >
-                                                    <Users className="w-3 h-3 mr-1" />
-                                                    Squad
-                                                </Button>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="h-7 text-xs border-purple-300 text-purple-700 hover:bg-purple-50"
-                                                    onClick={() => handleOpenCoachModal(team)}
-                                                >
-                                                    <UserPlus className="w-3 h-3 mr-1" />
-                                                    Cấp HLV
-                                                </Button>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="h-7 text-xs"
-                                                    onClick={() => handleEditClick(team)}
-                                                >
-                                                    <Pencil className="w-3 h-3 mr-1" />
-                                                    Sửa
-                                                </Button>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDelete(team.id)}
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </Card>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap pl-16 md:pl-0">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="h-7 text-xs"
+                                            onClick={() => handleViewPlayers(team)}
+                                        >
+                                            <Users className="w-3 h-3 mr-1" />
+                                            Squad
+                                        </Button>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="h-7 text-xs border-purple-300 text-purple-700 hover:bg-purple-50"
+                                            onClick={() => handleOpenCoachModal(team)}
+                                        >
+                                            <UserPlus className="w-3 h-3 mr-1" />
+                                            Cấp HLV
+                                        </Button>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="h-7 text-xs"
+                                            onClick={() => handleEditClick(team)}
+                                        >
+                                            <Pencil className="w-3 h-3 mr-1" />
+                                            Sửa
+                                        </Button>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            onClick={() => handleDelete(team.id)}
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             )}
 
             {/* --- MODAL XEM CẦU THỦ --- */}
