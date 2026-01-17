@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { playerService, teamService } from '../../services';
 import type { Team, Player } from '../../types';
-import { getImageUrl } from '../../utils';
+import { getImageUrl, exportToCSV, readCSVFile } from '../../utils';
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,7 +31,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, Trash2, UserPlus, Pencil } from "lucide-react"
+import { Loader2, Trash2, UserPlus, Pencil, Download, Upload } from "lucide-react"
 
 export const AdminPlayerPage = () => {
     // State Form
@@ -48,6 +48,10 @@ export const AdminPlayerPage = () => {
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [editingPlayerId, setEditingPlayerId] = useState<number | null>(null);
+    
+    // State Import CSV
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importLoading, setImportLoading] = useState(false);
 
     // 1. Load danh sách Đội bóng (để bỏ vào Dropdown)
     useEffect(() => {
@@ -141,7 +145,84 @@ export const AdminPlayerPage = () => {
         setIsFormModalOpen(false);
     };
 
-    // 6. Xử lý Xóa Cầu Thủ
+    // 6. Export CSV
+    const handleExportCSV = () => {
+        const currentTeam = teams.find(t => String(t.id) === selectedTeamId);
+        const data = players.map(player => ({
+            'Tên Cầu Thủ': player.name,
+            'Số Áo': player.shirtNumber.toString(),
+            'Vị Trí': player.position,
+            'Đội Bóng': currentTeam?.name || ''
+        }));
+        const teamName = currentTeam?.shortName || 'all';
+        exportToCSV(data, `danh_sach_cau_thu_${teamName}_${new Date().toISOString().split('T')[0]}.csv`);
+    };
+
+    // 7. Import CSV
+    const handleImportCSV = async (file: File) => {
+        if (!selectedTeamId) {
+            alert('❌ Vui lòng chọn đội bóng trước khi import!');
+            return;
+        }
+
+        setImportLoading(true);
+        try {
+            const csvData = await readCSVFile(file);
+            
+            // Validate CSV format
+            const requiredFields = ['Tên Cầu Thủ', 'Số Áo', 'Vị Trí'];
+            const missingFields = requiredFields.filter(field => !csvData[0] || !(field in csvData[0]));
+            if (missingFields.length > 0) {
+                alert(`❌ File CSV thiếu các cột: ${missingFields.join(', ')}\n\nCác cột bắt buộc: ${requiredFields.join(', ')}`);
+                setImportLoading(false);
+                return;
+            }
+
+            // Import từng cầu thủ
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const row of csvData) {
+                try {
+                    const shirtNumber = parseInt(row['Số Áo'] || '0');
+                    if (isNaN(shirtNumber) || shirtNumber <= 0) {
+                        console.error(`Số áo không hợp lệ: ${row['Số Áo']}`);
+                        errorCount++;
+                        continue;
+                    }
+
+                    const position = (row['Vị Trí'] || '').toUpperCase();
+                    if (!['GK', 'DF', 'MF', 'FW'].includes(position)) {
+                        console.error(`Vị trí không hợp lệ: ${row['Vị Trí']}`);
+                        errorCount++;
+                        continue;
+                    }
+
+                    await playerService.createPlayer({
+                        name: row['Tên Cầu Thủ'] || '',
+                        shirtNumber,
+                        position,
+                        teamId: Number(selectedTeamId)
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Lỗi import cầu thủ ${row['Tên Cầu Thủ']}:`, error);
+                    errorCount++;
+                }
+            }
+
+            alert(`✅ Import hoàn tất!\n- Thành công: ${successCount}\n- Lỗi: ${errorCount}`);
+            setShowImportModal(false);
+            fetchPlayers(selectedTeamId);
+        } catch (error) {
+            console.error(error);
+            alert('❌ Lỗi đọc file CSV! Vui lòng kiểm tra định dạng file.');
+        } finally {
+            setImportLoading(false);
+        }
+    };
+
+    // 8. Xử lý Xóa Cầu Thủ
     const handleDelete = async (playerId: number) => {
         if (!confirm("Bạn có chắc chắn muốn xóa cầu thủ này?")) return;
 
@@ -175,6 +256,14 @@ export const AdminPlayerPage = () => {
                             ))}
                         </SelectContent>
                     </Select>
+                    <Button variant="outline" onClick={handleExportCSV} disabled={!selectedTeamId || players.length === 0}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Xuất CSV
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowImportModal(true)} disabled={!selectedTeamId}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Nhập CSV
+                    </Button>
                     <Button onClick={() => setIsFormModalOpen(true)} className="bg-green-600 hover:bg-green-700">
                         <UserPlus className="w-4 h-4 mr-2" />
                         Thêm Cầu Thủ
@@ -346,6 +435,59 @@ export const AdminPlayerPage = () => {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* MODAL IMPORT CSV */}
+            <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Upload className="w-5 h-5" />
+                            Nhập Cầu Thủ từ CSV
+                        </DialogTitle>
+                        <DialogDescription>
+                            Chọn file CSV để import danh sách cầu thủ vào đội <span className="font-bold">{teams.find(t => String(t.id) === selectedTeamId)?.name}</span>. File CSV cần có các cột: Tên Cầu Thủ, Số Áo, Vị Trí (GK/DF/MF/FW).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Chọn file CSV</Label>
+                            <Input
+                                type="file"
+                                accept=".csv"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        handleImportCSV(file);
+                                    }
+                                }}
+                                disabled={importLoading || !selectedTeamId}
+                                className="cursor-pointer"
+                            />
+                        </div>
+                        <div className="text-xs text-muted-foreground bg-green-50 p-3 rounded border border-green-100">
+                            <p className="font-bold mb-1">📋 Định dạng CSV mẫu:</p>
+                            <pre className="whitespace-pre-wrap font-mono text-xs">
+Tên Cầu Thủ,Số Áo,Vị Trí{'\n'}
+Nguyễn Văn A,10,FW{'\n'}
+Trần Văn B,1,GK{'\n'}
+Lê Văn C,4,DF
+                            </pre>
+                            <p className="mt-2 text-xs">💡 <strong>Vị Trí:</strong> GK (Thủ môn), DF (Hậu vệ), MF (Tiền vệ), FW (Tiền đạo)</p>
+                        </div>
+                    </div>
+                    {importLoading && (
+                        <div className="flex items-center justify-center py-2">
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            <span className="text-sm">Đang import...</span>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowImportModal(false)} disabled={importLoading}>
+                            Đóng
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

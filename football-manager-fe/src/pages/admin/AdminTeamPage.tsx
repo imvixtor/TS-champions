@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { teamService, playerService } from '../../services';
-import { getImageUrl } from '../../utils';
+import { getImageUrl, exportToCSV, readCSVFile } from '../../utils';
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +23,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Plus, Pencil, Trash2, Users, UserPlus } from "lucide-react"
+import { Loader2, Plus, Pencil, Trash2, Users, UserPlus, Download, Upload } from "lucide-react"
 
 export const AdminTeamPage = () => {
     // State Form & List
@@ -49,6 +49,10 @@ export const AdminTeamPage = () => {
     const [selectedTeamForCoach, setSelectedTeamForCoach] = useState<any>(null);
     const [coachUsername, setCoachUsername] = useState('');
     const [coachPassword, setCoachPassword] = useState('');
+
+    // State Modal Import CSV
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importLoading, setImportLoading] = useState(false);
 
     useEffect(() => {
         fetchTeams();
@@ -161,6 +165,62 @@ export const AdminTeamPage = () => {
         }
     };
 
+    // Export CSV
+    const handleExportCSV = () => {
+        const data = teams.map(team => ({
+            'Tên Đội': team.name,
+            'Mã (Short)': team.shortName,
+            'Sân Vận Động': team.stadium,
+            'HLV Trưởng': team.coachName || ''
+        }));
+        exportToCSV(data, `danh_sach_doi_bong_${new Date().toISOString().split('T')[0]}.csv`);
+    };
+
+    // Import CSV
+    const handleImportCSV = async (file: File) => {
+        setImportLoading(true);
+        try {
+            const csvData = await readCSVFile(file);
+            
+            // Validate CSV format
+            const requiredFields = ['Tên Đội', 'Mã (Short)', 'Sân Vận Động'];
+            const missingFields = requiredFields.filter(field => !csvData[0] || !(field in csvData[0]));
+            if (missingFields.length > 0) {
+                alert(`❌ File CSV thiếu các cột: ${missingFields.join(', ')}\n\nCác cột bắt buộc: ${requiredFields.join(', ')}`);
+                setImportLoading(false);
+                return;
+            }
+
+            // Import từng đội
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const row of csvData) {
+                try {
+                    await teamService.createTeam({
+                        name: row['Tên Đội'] || '',
+                        shortName: row['Mã (Short)'] || '',
+                        stadium: row['Sân Vận Động'] || '',
+                        coachName: row['HLV Trưởng'] || undefined
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Lỗi import đội ${row['Tên Đội']}:`, error);
+                    errorCount++;
+                }
+            }
+
+            alert(`✅ Import hoàn tất!\n- Thành công: ${successCount}\n- Lỗi: ${errorCount}`);
+            setShowImportModal(false);
+            fetchTeams();
+        } catch (error) {
+            console.error(error);
+            alert('❌ Lỗi đọc file CSV! Vui lòng kiểm tra định dạng file.');
+        } finally {
+            setImportLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-6 w-full p-4 animate-fade-in-up">
 
@@ -170,13 +230,23 @@ export const AdminTeamPage = () => {
                     <h2 className="text-3xl font-bold tracking-tight">Quản Lý Đội Bóng</h2>
                     <p className="text-muted-foreground">Quản lý tất cả các đội bóng trong hệ thống.</p>
                 </div>
-                <Button onClick={() => {
-                    handleCancelEdit();
-                    setIsFormModalOpen(true);
-                }} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Thêm Đội Mới
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={handleExportCSV}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Xuất CSV
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowImportModal(true)}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Nhập CSV
+                    </Button>
+                    <Button onClick={() => {
+                        handleCancelEdit();
+                        setIsFormModalOpen(true);
+                    }} className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Thêm Đội Mới
+                    </Button>
+                </div>
             </div>
 
             {/* DANH SÁCH ĐỘI BÓNG */}
@@ -367,6 +437,57 @@ export const AdminTeamPage = () => {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* --- MODAL IMPORT CSV --- */}
+            <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Upload className="w-5 h-5" />
+                            Nhập Đội Bóng từ CSV
+                        </DialogTitle>
+                        <DialogDescription>
+                            Chọn file CSV để import danh sách đội bóng. File CSV cần có các cột: Tên Đội, Mã (Short), Sân Vận Động, HLV Trưởng (tùy chọn).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Chọn file CSV</Label>
+                            <Input
+                                type="file"
+                                accept=".csv"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        handleImportCSV(file);
+                                    }
+                                }}
+                                disabled={importLoading}
+                                className="cursor-pointer"
+                            />
+                        </div>
+                        <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded border border-blue-100">
+                            <p className="font-bold mb-1">📋 Định dạng CSV mẫu:</p>
+                            <pre className="whitespace-pre-wrap font-mono text-xs">
+Tên Đội,Mã (Short),Sân Vận Động,HLV Trưởng{'\n'}
+Liverpool FC,LIV,Anfield,Arne Slot{'\n'}
+Manchester United,MANU,Old Trafford,Erik ten Hag
+                            </pre>
+                        </div>
+                    </div>
+                    {importLoading && (
+                        <div className="flex items-center justify-center py-2">
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            <span className="text-sm">Đang import...</span>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowImportModal(false)} disabled={importLoading}>
+                            Đóng
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
