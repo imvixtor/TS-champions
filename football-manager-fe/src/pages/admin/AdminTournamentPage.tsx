@@ -258,21 +258,27 @@ export const AdminTournamentPage = () => {
         return (
             <div className="space-y-6 w-full p-4 animate-fade-in-up">
                 {/* Header Info */}
-                <div className="flex items-center gap-4">
-                    <Button variant="outline" onClick={() => setViewMode('LIST')}>
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại
-                    </Button>
-                    <div className="flex-1 bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4 rounded-xl flex justify-between items-center shadow-lg">
-                        <div>
-                            <h1 className="text-2xl font-bold uppercase text-yellow-400 tracking-wider flex items-center gap-2">
-                                <Trophy className="w-6 h-6" />
-                                {selectedTournament.name}
-                            </h1>
-                            <p className="opacity-80 text-sm flex items-center gap-2 mt-1">
-                                <Calendar className="w-3 h-3" /> Mùa giải: {selectedTournament.season} | {selectedTournament.startDate} - {selectedTournament.endDate}
-                            </p>
+                <div className="space-y-4 border-b pb-4">
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                        <Button variant="outline" onClick={() => setViewMode('LIST')} className="self-start shrink-0">
+                            <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại
+                        </Button>
+                        <div className="flex flex-col gap-4 w-full lg:w-auto">
+                            <div className="min-w-0">
+                                <h2 className="text-2xl lg:text-3xl font-bold tracking-tight flex items-center gap-2 break-words">
+                                    <Trophy className="w-5 h-5 lg:w-6 lg:h-6 shrink-0" />
+                                    <span className="break-words">{selectedTournament.name}</span>
+                                </h2>
+                            </div>
                         </div>
-                        <Badge className="bg-blue-600 hover:bg-blue-700 font-mono">ID: {selectedTournament.id}</Badge>
+                        <div className="flex items-center gap-3 flex-wrap shrink-0 self-start lg:self-center">
+                            <Badge variant="outline" className="font-mono">ID: {selectedTournament.id}</Badge>
+                            <Badge variant="secondary">Mùa giải: {selectedTournament.season}</Badge>
+                            <Badge variant="secondary" className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {selectedTournament.startDate} - {selectedTournament.endDate}
+                            </Badge>
+                        </div>
                     </div>
                 </div>
 
@@ -288,7 +294,7 @@ export const AdminTournamentPage = () => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="flex-1 p-0 flex flex-col">
-                            <ScrollArea className="flex-1 h-[300px] p-4">
+                            <ScrollArea className="h-[350px] p-4">
                                 <div className="space-y-2">
                                     {allTeams.map(team => {
                                         const isAlreadyIn = standings.some(s => s.teamId === team.id || s.teamName === team.name);
@@ -387,14 +393,14 @@ export const AdminTournamentPage = () => {
                     </Card>
 
                     {/* CỘT 3: THỦ CÔNG */}
-                    <Card className="flex flex-col h-fit border-purple-100 shadow-sm">
+                    <Card className="flex flex-col h-full border-purple-100 shadow-sm">
                         <CardHeader className="pb-3 border-b bg-purple-50/50">
                             <CardTitle className="text-lg flex items-center gap-2 text-purple-800">
                                 <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0 bg-purple-100 border-purple-200 text-purple-700 rounded-full">3</Badge>
                                 Điều Chỉnh Thủ Công
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 space-y-4">
+                        <CardContent className="flex-1 p-4 space-y-4">
                             <div className="text-sm text-muted-foreground bg-purple-50 p-3 rounded border border-purple-100">
                                 Di chuyển đội bóng sang bảng khác theo ý muốn.
                             </div>
